@@ -10,6 +10,38 @@ public class ColumnComparer {
 	
 	private static OracleTableReader tableReader;
 
+	private static Column findColumn(List<Column> columnList, String columnName){
+		for(Column column : columnList){
+			if(columnName.equals(column.getName())){
+				return column;
+			}
+		}
+		return null;
+	}
+	
+	private static void compareColumn(List<Column> ddlColumnList, List<Column> dbColumnList){
+		for(Column ddlColumn : ddlColumnList){
+			Column dbColumn = findColumn(dbColumnList, ddlColumn.getName());
+			if(dbColumn == null){
+				// case 1: there is no column in oracle
+				System.out.println("[CASE1] dbColumn: " + dbColumn + " ddlColumn" + ddlColumn);
+			} else {
+				if(ddlColumn.compareTo(dbColumn) != 0){
+					// case 2: there is difference between ddl and db
+					System.out.println("[CASE2] dbColumn: " + dbColumn + " ddlColumn" + ddlColumn);
+				}
+			}
+		}
+		
+		for(Column dbColumn : dbColumnList){
+			Column ddlColumn = findColumn(ddlColumnList, dbColumn.getName());
+			if(ddlColumn == null){
+				// case 3: there is no column in ddl
+				System.out.println("[CASE3] dbColumn: " + dbColumn + " ddlColumn" + ddlColumn);
+			} 
+		}
+	}
+	
 	private static void splitDdl(String ddlText) {
 		String[] ddlList = ddlText.split("CREATE TABLE ");
 
@@ -46,6 +78,7 @@ public class ColumnComparer {
 			
 			List<Column> dbColumnList = tableReader.readTableColumns(tableName);
 			
+			compareColumn(columnList, dbColumnList);
 		}
 
 	}
@@ -56,7 +89,7 @@ public class ColumnComparer {
 		String filePath = "./ddl.txt";
 
 		String ddlText = ddlReader.readDdl(filePath);
-		System.out.println("DDL TEXT: " + ddlText);
+//		System.out.println("DDL TEXT: " + ddlText);
 		
 		OracleDbConnection oracleDbConnection = new OracleDbConnection();
 		Connection conn = oracleDbConnection.connection();

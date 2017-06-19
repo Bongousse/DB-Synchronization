@@ -1,6 +1,8 @@
 package exerd.utilizing.com.domain;
 
-public class Column {
+import java.util.Comparator;
+
+public class Column implements Comparable<Column> {
 	private String name;
 	private String type;
 	private int size;
@@ -62,6 +64,15 @@ public class Column {
 
 	public void setComment(String comment) {
 		this.comment = comment;
+	}
+
+	@Override
+	public int compareTo(Column o) {
+		if (this.getName().equals(o.getName()) && this.getType().equals(o.getType()) && this.getSize() == o.getSize()
+				&& this.getNullable() == o.getNullable()) {
+			return 0;
+		}
+		return 1;
 	}
 
 }
