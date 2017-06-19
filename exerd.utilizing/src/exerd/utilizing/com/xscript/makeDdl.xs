@@ -6,11 +6,15 @@ plugins.addGetter("null-exp", function(it){
 	}
 });
 
+var file = newFile("/exerd.utilizing/ddl.txt");
+var outputStream = file.getOutputStream();
+	
 select(function(it){
 	return it.get("type") == "table";
 }).each(function(table){
 	
-	console.log(format("CREATE TABLE %s (", table.get("physical-name")));
+//	console.log(format("CREATE TABLE %s (", table.get("physical-name")));
+	outputStream.println(format("CREATE TABLE %s (", table.get("physical-name")));
 	
 	var total = table.select(function(it){
 		return it.get("type") == "column";
@@ -30,13 +34,20 @@ select(function(it){
 		var nullable = column.get("null-exp");
 		
 		if (index === total){
-			console.log(format("%s %s %s %s", indent, physicalName, dataType, nullable));
+//			console.log(format("%s %s %s %s", indent, physicalName, dataType, nullable));
+			outputStream.println(format("%s %s %s %s", indent, physicalName, dataType, nullable));
 		} else {
-			console.log(format("%s %s %s %s,", indent, physicalName, dataType, nullable));
+//			console.log(format("%s %s %s %s,", indent, physicalName, dataType, nullable));
+			outputStream.println(format("%s %s %s %s,", indent, physicalName, dataType, nullable));
 		}
 		
 	});
 	
-	console.log(format(")"));
-	console.log();
+//	console.log(format(")"));
+//	console.log();
+	
+	outputStream.println(format(")"));
+	outputStream.println();
 });
+
+outputStream.close();
