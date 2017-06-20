@@ -9,10 +9,10 @@ import java.util.List;
 
 import exerd.utilizing.com.domain.Column;
 
-public class OracleTableReader {
+public class TableReader {
 	private Connection conn;
 	
-	public OracleTableReader(Connection conn){
+	public TableReader(Connection conn){
 		this.conn = conn;
 	}
 	

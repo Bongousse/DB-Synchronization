@@ -8,7 +8,7 @@ import exerd.utilizing.com.domain.Column;
 
 public class ColumnComparer {
 
-	private static OracleTableReader tableReader;
+	private static TableReader tableReader;
 
 	private static Column findColumn(List<Column> columnList, String columnName) {
 		for (Column column : columnList) {
@@ -104,9 +104,9 @@ public class ColumnComparer {
 		String ddlText = ddlReader.readDdl(filePath);
 		// System.out.println("DDL TEXT: " + ddlText);
 
-		OracleDbConnection oracleDbConnection = new OracleDbConnection();
+		DbConnection oracleDbConnection = new DbConnection();
 		Connection conn = oracleDbConnection.connection();
-		tableReader = new OracleTableReader(conn);
+		tableReader = new TableReader(conn);
 
 		splitDdl(ddlText);
 	}

@@ -7,7 +7,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
 
-public class OracleDbConnection {
+public class DbConnection {
 	public Connection connection() {
 		Properties properties = new Properties();
 		try {
