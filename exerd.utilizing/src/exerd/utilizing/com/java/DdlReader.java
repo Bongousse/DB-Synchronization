@@ -22,7 +22,7 @@ public class DdlReader {
 			String line = null;
 			while ((line = bufferedTextFileReader.readLine()) != null) {
 				contentReceiver.append(line + "\n");
-			}
+			} 
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {

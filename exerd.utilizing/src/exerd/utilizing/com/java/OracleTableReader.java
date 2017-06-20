@@ -8,13 +8,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import exerd.utilizing.com.domain.Column;
-import oracle.jdbc.driver.OracleConnection;
 
 public class OracleTableReader {
-	private OracleConnection conn;
+	private Connection conn;
 	
 	public OracleTableReader(Connection conn){
-		this.conn = (OracleConnection)conn;
+		this.conn = conn;
 	}
 	
 	public List<Column> readTableColumns(String tableName) {
@@ -22,26 +21,27 @@ public class OracleTableReader {
 		
 		try {
 			DatabaseMetaData metaData = conn.getMetaData();
-			ResultSet columnsResultSet = metaData.getColumns(null, null, tableName, null);
+			ResultSet columnsResultSet = metaData.getColumns(null, null, tableName.toLowerCase(), null);
 			
 			while(columnsResultSet.next()){
-				String name = columnsResultSet.getString("COLUMN_NAME");
-				String type = columnsResultSet.getString("TYPE_NAME");
+				String name = columnsResultSet.getString("COLUMN_NAME").toUpperCase();
+				String type = columnsResultSet.getString("TYPE_NAME").toUpperCase();
 				String size = columnsResultSet.getString("COLUMN_SIZE");
 				String nullable = columnsResultSet.getString("NULLABLE");
 				String remarks = columnsResultSet.getString("REMARKS");
-				System.out.print(name);
-				System.out.print("\t" + columnsResultSet.getString("TYPE_NAME"));
-				System.out.print("\t" + columnsResultSet.getString("COLUMN_SIZE"));
-				System.out.print("\t" + columnsResultSet.getString("NULLABLE"));
-				System.out.print("\t" + remarks);
-				System.out.println();
+//				System.out.print(name);
+//				System.out.print("\t" + columnsResultSet.getString("TYPE_NAME"));
+//				System.out.print("\t" + columnsResultSet.getString("COLUMN_SIZE"));
+//				System.out.print("\t" + columnsResultSet.getString("NULLABLE"));
+//				System.out.print("\t" + remarks);
+//				System.out.println(); 
 				
 				Column column = new Column();
 				column.setName(name);
 				column.setType(type);
 				column.setSize(Integer.valueOf(size));
 				column.setNullable(Integer.valueOf(nullable));
+				column.setComment(remarks);
 				
 				columns.add(column);
 			} 
