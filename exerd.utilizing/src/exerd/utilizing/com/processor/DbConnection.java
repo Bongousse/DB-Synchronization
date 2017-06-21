@@ -1,21 +1,12 @@
-package exerd.utilizing.com.java;
+package exerd.utilizing.com.processor;
 
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
 
 public class DbConnection {
-	public Connection connection() {
-		Properties properties = new Properties();
-		try {
-			properties.load(new FileInputStream("config.properties"));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
+	public Connection connection(Properties properties) {
 		String dbms = properties.getProperty("DBMS");
 		String ip = properties.getProperty("IP");// "182.162.100.120";
 		String listenerPort = properties.getProperty("PORT"); // "10110";

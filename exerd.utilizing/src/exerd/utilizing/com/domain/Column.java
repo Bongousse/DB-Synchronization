@@ -1,7 +1,5 @@
 package exerd.utilizing.com.domain;
 
-import java.util.Comparator;
-
 public class Column implements Comparable<Column> {
 	private String name;
 	private String type;

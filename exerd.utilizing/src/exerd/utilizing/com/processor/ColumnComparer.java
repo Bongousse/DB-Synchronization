@@ -1,8 +1,11 @@
-package exerd.utilizing.com.java;
+package exerd.utilizing.com.processor;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import exerd.utilizing.com.domain.Column;
 
@@ -20,21 +23,24 @@ public class ColumnComparer {
 	}
 
 	private static void compareColumn(List<Column> ddlColumnList, List<Column> dbColumnList) {
-		if(dbColumnList.size() == 0){
-			// case 4: there is no table in oracle
+		if (dbColumnList.size() == 0) {
+			// case 4: there is no table in db
 			System.out.println("[CASE4] There is no table in database\n");
 			return;
 		}
-		
+
 		for (Column ddlColumn : ddlColumnList) {
 			Column dbColumn = findColumn(dbColumnList, ddlColumn.getName());
 			if (dbColumn == null) {
-				// case 1: there is no column in oracle
+				// case 1: there is no column in db
 				System.out.println("[CASE1] dbColumn: " + dbColumn + " ddlColumn" + ddlColumn);
+				// Common: ALTER TABLE 테이블명 ADD 컬럼명 데이터 유형 [NOT NULL];
 			} else {
 				if (ddlColumn.compareTo(dbColumn) != 0) {
 					// case 2: there is difference between ddl and db
 					System.out.println("[CASE2] dbColumn: " + dbColumn + " ddlColumn" + ddlColumn);
+					// Oracle: ALTER TABLE 테이블명 MODIFY (컬럼명 데이터유형 [NOT NULL]);
+					// PostgreSQL: ALTER TABLE 테이블명 ALTER COLUMN 컬럼명 TYPE 데이터유형;
 				}
 			}
 		}
@@ -46,7 +52,7 @@ public class ColumnComparer {
 				System.out.println("[CASE3] dbColumn: " + dbColumn + " ddlColumn" + ddlColumn);
 			}
 		}
-		
+
 		System.out.println();
 	}
 
@@ -97,15 +103,22 @@ public class ColumnComparer {
 	}
 
 	private static void process() {
+		Properties properties = new Properties();
+		try {
+			properties.load(new FileInputStream("config.properties"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 		DdlReader ddlReader = new DdlReader();
 
-		String filePath = "./ddl.txt";
+		String filePath = properties.getProperty("DDL_FILE_PATH");
 
 		String ddlText = ddlReader.readDdl(filePath);
 		// System.out.println("DDL TEXT: " + ddlText);
 
-		DbConnection oracleDbConnection = new DbConnection();
-		Connection conn = oracleDbConnection.connection();
+		DbConnection dbConnection = new DbConnection();
+		Connection conn = dbConnection.connection(properties);
 		tableReader = new TableReader(conn);
 
 		splitDdl(ddlText);

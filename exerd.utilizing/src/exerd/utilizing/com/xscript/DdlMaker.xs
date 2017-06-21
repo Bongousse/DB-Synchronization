@@ -46,7 +46,7 @@ select(function(it){
 //	console.log(format(")"));
 //	console.log();
 	
-	outputStream.println(format(")"));
+	outputStream.println(format(");"));
 	outputStream.println();
 });
 
