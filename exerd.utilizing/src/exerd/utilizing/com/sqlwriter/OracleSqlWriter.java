@@ -27,7 +27,8 @@ public class OracleSqlWriter implements ISqlWriter{
 	@Override
 	public void writeDropColumn(String tableName, Column column) {
 		// TODO Auto-generated method stub
-		
 	}
 
 }
+
+
