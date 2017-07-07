@@ -66,8 +66,11 @@ public class Column implements Comparable<Column> {
 
 	@Override
 	public int compareTo(Column o) {
-		if (this.getName().equals(o.getName()) && this.getType().equals(o.getType()) && this.getSize() == o.getSize()
-				&& this.getNullable() == o.getNullable()) {
+		if (this.getName().equals(o.getName()) && this.getType().equals(o.getType())
+				&& this.getType().equals("BYTEA") && this.getNullable() == o.getNullable()) {
+			return 0;
+		} else if (this.getName().equals(o.getName()) && this.getType().equals(o.getType())
+				&& this.getSize() == o.getSize() && this.getNullable() == o.getNullable()) {
 			return 0;
 		}
 		return 1;

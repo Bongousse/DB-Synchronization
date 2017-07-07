@@ -8,10 +8,14 @@ import java.util.List;
 import java.util.Properties;
 
 import exerd.utilizing.com.domain.Column;
+import exerd.utilizing.com.sqlwriter.ISqlWriter;
+import exerd.utilizing.com.sqlwriter.SqlWriterFactory;
 
 public class ColumnComparer {
 
 	private static TableReader tableReader;
+	
+	private static ISqlWriter sqlWriter;
 
 	private static Column findColumn(List<Column> columnList, String columnName) {
 		for (Column column : columnList) {
@@ -22,7 +26,7 @@ public class ColumnComparer {
 		return null;
 	}
 
-	private static void compareColumn(List<Column> ddlColumnList, List<Column> dbColumnList) {
+	private static void compareColumn(String tableName, List<Column> ddlColumnList, List<Column> dbColumnList) {
 		if (dbColumnList.size() == 0) {
 			// case 4: there is no table in db
 			System.out.println("[CASE4] There is no table in database\n");
@@ -33,14 +37,16 @@ public class ColumnComparer {
 			Column dbColumn = findColumn(dbColumnList, ddlColumn.getName());
 			if (dbColumn == null) {
 				// case 1: there is no column in db
-				System.out.println("[CASE1] dbColumn: " + dbColumn + " ddlColumn" + ddlColumn);
+				System.out.println("[CASE1] dbColumn: " + dbColumn + " ddlColumn: " + ddlColumn);
 				// Common: ALTER TABLE 테이블명 ADD 컬럼명 데이터 유형 [NOT NULL];
+				sqlWriter.writeAddColumn(tableName, ddlColumn);
 			} else {
 				if (ddlColumn.compareTo(dbColumn) != 0) {
 					// case 2: there is difference between ddl and db
-					System.out.println("[CASE2] dbColumn: " + dbColumn + " ddlColumn" + ddlColumn);
+					System.out.println("[CASE2] dbColumn: " + dbColumn + " ddlColumn: " + ddlColumn);
 					// Oracle: ALTER TABLE 테이블명 MODIFY (컬럼명 데이터유형 [NOT NULL]);
 					// PostgreSQL: ALTER TABLE 테이블명 ALTER COLUMN 컬럼명 TYPE 데이터유형;
+					sqlWriter.writeAlterColumn(tableName, ddlColumn);
 				}
 			}
 		}
@@ -49,7 +55,8 @@ public class ColumnComparer {
 			Column ddlColumn = findColumn(ddlColumnList, dbColumn.getName());
 			if (ddlColumn == null) {
 				// case 3: there is no column in ddl
-				System.out.println("[CASE3] dbColumn: " + dbColumn + " ddlColumn" + ddlColumn);
+				System.out.println("[CASE3] dbColumn: " + dbColumn + " ddlColumn: " + ddlColumn);
+				sqlWriter.writeDropColumn(tableName, dbColumn);
 			}
 		}
 
@@ -97,7 +104,7 @@ public class ColumnComparer {
 
 			List<Column> dbColumnList = tableReader.readTableColumns(tableName);
 
-			compareColumn(columnList, dbColumnList);
+			compareColumn(tableName, columnList, dbColumnList);
 		}
 
 	}
@@ -109,6 +116,9 @@ public class ColumnComparer {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		String dbms = properties.getProperty("DBMS");
+		
+		sqlWriter = SqlWriterFactory.getSqlWriter(dbms);
 
 		DdlReader ddlReader = new DdlReader();
 
