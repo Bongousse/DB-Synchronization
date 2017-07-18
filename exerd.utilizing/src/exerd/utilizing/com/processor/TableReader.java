@@ -21,7 +21,7 @@ public class TableReader {
 		
 		try {
 			DatabaseMetaData metaData = conn.getMetaData();
-			ResultSet columnsResultSet = metaData.getColumns(null, null, tableName.toLowerCase(), null);
+			ResultSet columnsResultSet = metaData.getColumns(null, null, tableName, null);
 			
 			while(columnsResultSet.next()){
 				String name = columnsResultSet.getString("COLUMN_NAME").toUpperCase();

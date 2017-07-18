@@ -11,7 +11,7 @@ var outputStream = file.getOutputStream();
 	
 select(function(it){
 	return it.get("type") == "table";
-}).each(function(table){
+}).each(function(table){  
 	
 	console.log(format("CREATE TABLE %s (", table.get("physical-name")));
 	outputStream.println(format("CREATE TABLE %s (", table.get("physical-name")));

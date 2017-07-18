@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+import exerd.utilizing.com.constants.IConstants;
 import exerd.utilizing.com.domain.Column;
 import exerd.utilizing.com.sqlwriter.ISqlWriter;
 import exerd.utilizing.com.sqlwriter.SqlWriterFactory;
@@ -16,6 +17,8 @@ public class ColumnComparer {
 	private static TableReader tableReader;
 	
 	private static ISqlWriter sqlWriter;
+	
+	private static String dbms;
 
 	private static Column findColumn(List<Column> columnList, String columnName) {
 		for (Column column : columnList) {
@@ -66,7 +69,7 @@ public class ColumnComparer {
 	private static void splitDdl(String ddlText) {
 		String[] ddlList = ddlText.split("CREATE TABLE ");
 
-		System.out.println("DDL SIZE:" + (ddlList.length - 1));
+		System.out.println("TABLE SIZE:" + (ddlList.length - 1));
 		for (String ddl : ddlList) {
 			if (ddl.equals(""))
 				continue;
@@ -102,6 +105,11 @@ public class ColumnComparer {
 			}
 			System.out.println("COLUMN LIST: " + columnList);
 
+			if(IConstants.DBMS.ORACLE.equals(dbms)){
+				tableName = tableName.toUpperCase();
+			} else if(IConstants.DBMS.POSTGRESQL.equals(dbms)){
+				tableName = tableName.toLowerCase();
+			}
 			List<Column> dbColumnList = tableReader.readTableColumns(tableName);
 
 			compareColumn(tableName, columnList, dbColumnList);
@@ -116,7 +124,7 @@ public class ColumnComparer {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		String dbms = properties.getProperty("DBMS");
+		dbms = properties.getProperty("DBMS");
 		
 		sqlWriter = SqlWriterFactory.getSqlWriter(dbms);
 
