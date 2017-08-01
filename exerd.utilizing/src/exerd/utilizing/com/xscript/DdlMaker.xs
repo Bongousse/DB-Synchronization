@@ -8,6 +8,9 @@ plugins.addGetter("null-exp", function(it){
 
 var file = newFile("/exerd.utilizing/ddl.txt");
 var outputStream = file.getOutputStream();
+
+var isPrimaryKeyOption = true;
+var isCommentOption = true;	
 	
 select(function(it){
 	return it.get("type") == "table";
@@ -15,6 +18,7 @@ select(function(it){
 	
 	var tableName = table.get("physical-name");  
 	
+	// CREATE TABLE
 	console.log(format("CREATE TABLE %s (", tableName));
 	outputStream.println(format("CREATE TABLE %s (", tableName));
 	
@@ -23,10 +27,11 @@ select(function(it){
 	}).size();
 	
 	var index = 0;
+	var primaryKeyCount = 0;
 	
 	table.select(function(it){
 		return it.get("type") == "column";
-	}).each(function(column){
+	}).each(function(column){ 
 		index ++;
 		
 		var indent = "\t";
@@ -35,29 +40,59 @@ select(function(it){
 		var dataType = column.get("data-type");
 		var nullable = column.get("null-exp");
 		var isPrimaryKey = column.get("is-primary-key");
-		var primaryKey;
-		if(isPrimaryKey == true){ 
-			primaryKey = "primary key"; 
-		} else {  
-			primaryKey = "";
-		}
+		if(isPrimaryKey == true){
+			primaryKeyCount ++; 
+		} 
 		  
 		if (index === total){
-			console.log(format("%s %s %s %s %s", indent, physicalName, dataType, nullable, primaryKey));
-			outputStream.println(format("%s %s %s %s %s", indent, physicalName, dataType, nullable, primaryKey));
+			console.log(format("%s %s %s %s", indent, physicalName, dataType, nullable));
+			outputStream.println(format("%s %s %s %s", indent, physicalName, dataType, nullable));
 		} else {
-			console.log(format("%s %s %s %s %s,", indent, physicalName, dataType, nullable, primaryKey));
-			outputStream.println(format("%s %s %s %s %s,", indent, physicalName, dataType, nullable, primaryKey));
+			console.log(format("%s %s %s %s,", indent, physicalName, dataType, nullable));
+			outputStream.println(format("%s %s %s %s,", indent, physicalName, dataType, nullable));
 		}
 	});
 	
-	console.log(format(");"));
-	console.log();
+	console.log(format(");\n"));
 	
-	outputStream.println(format(");"));
-	outputStream.println();
+	outputStream.println(format(");\n"));
+	
+	var index = 0;
+	// PK 생성
+	if(isPrimaryKeyOption == true){
+		console.log(format("CREATE UNIQUE INDEX PK_%s ON %s \n( ", tableName, tableName));
+		outputStream.println(format("CREATE UNIQUE INDEX PK_%s ON %s \n( ", tableName, tableName));
+		
+		table.select(function(it){
+			return it.get("type") == "column";
+		}).each(function(column){
+			index ++;
+			
+			var indent = "\t";
+			
+			var physicalName = column.get("physical-name");
+			var isPrimaryKey = column.get("is-primary-key");
+			var primaryKey;
+			if(isPrimaryKey == true){
+				
+				if (index === primaryKeyCount){
+					console.log(format("%s %s ASC", indent, physicalName));
+					outputStream.println(format("%s %s ASC", indent, physicalName));
+				} else {
+					console.log(format("%s %s ASC,", indent, physicalName));
+					outputStream.println(format("%s %s ASC,", indent, physicalName));
+				}
+			} 
+		});
+		
+		console.log(format(");\n"));
+		outputStream.println(format(");\n"));
+		
+		console.log(format("ALTER TABLE %s ADD CONSTRAINT PK_%s PRIMARY KEY USING INDEX PK_%s;\n", tableName, tableName, tableName));
+		outputStream.println(format("ALTER TABLE %s ADD CONSTRAINT PK_%s PRIMARY KEY USING INDEX PK_%s;\n", tableName, tableName, tableName));
+	}
 
-	var isCommentOption = true;	
+	// 코멘트 생성
 	if(isCommentOption == true){
 		var comment = table.get("logical-name");
 		console.log(format("COMMENT ON TABLE %s IS '%s';", tableName, comment));

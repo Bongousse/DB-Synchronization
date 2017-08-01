@@ -3,6 +3,7 @@ package exerd.utilizing.com.processor;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -15,9 +16,9 @@ import exerd.utilizing.com.sqlwriter.SqlWriterFactory;
 public class ColumnComparer {
 
 	private static TableReader tableReader;
-	
+
 	private static ISqlWriter sqlWriter;
-	
+
 	private static String dbms;
 
 	private static Column findColumn(List<Column> columnList, String columnName) {
@@ -36,6 +37,7 @@ public class ColumnComparer {
 			return;
 		}
 
+		int differentColumnCount = 0;
 		for (Column ddlColumn : ddlColumnList) {
 			Column dbColumn = findColumn(dbColumnList, ddlColumn.getName());
 			if (dbColumn == null) {
@@ -43,6 +45,7 @@ public class ColumnComparer {
 				System.out.println("[CASE1] dbColumn: " + dbColumn + " ddlColumn: " + ddlColumn);
 				// Common: ALTER TABLE 테이블명 ADD 컬럼명 데이터 유형 [NOT NULL];
 				sqlWriter.writeAddColumn(tableName, ddlColumn);
+				differentColumnCount++;
 			} else {
 				if (ddlColumn.compareTo(dbColumn) != 0) {
 					// case 2: there is difference between ddl and db
@@ -50,6 +53,7 @@ public class ColumnComparer {
 					// Oracle: ALTER TABLE 테이블명 MODIFY (컬럼명 데이터유형 [NOT NULL]);
 					// PostgreSQL: ALTER TABLE 테이블명 ALTER COLUMN 컬럼명 TYPE 데이터유형;
 					sqlWriter.writeAlterColumn(tableName, ddlColumn);
+					differentColumnCount++;
 				}
 			}
 		}
@@ -60,10 +64,13 @@ public class ColumnComparer {
 				// case 3: there is no column in ddl
 				System.out.println("[CASE3] dbColumn: " + dbColumn + " ddlColumn: " + ddlColumn);
 				sqlWriter.writeDropColumn(tableName, dbColumn);
+				differentColumnCount++;
 			}
 		}
 
-		System.out.println();
+		System.out.println("differentColumnCount: " + differentColumnCount);
+		System.out.println();		
+		
 	}
 
 	private static void splitDdl(String ddlText) {
@@ -77,7 +84,7 @@ public class ColumnComparer {
 			String tableName = ddl.substring(0, ddl.indexOf("(")).trim();
 			System.out.println("TABLE NAME:" + tableName);
 
-			String content = ddl.substring(ddl.indexOf("(") + 1, ddl.lastIndexOf(")")).trim();
+			String content = ddl.substring(ddl.indexOf("(") + 1, ddl.indexOf(");", ddl.indexOf("("))).trim();
 			String[] columnStringList = content.split("\n");
 			if (columnStringList.length == 1 && columnStringList[0].equals("")) {
 				System.out.println("COLUMN SIZE:" + 0);
@@ -105,9 +112,9 @@ public class ColumnComparer {
 			}
 			System.out.println("COLUMN LIST: " + columnList);
 
-			if(IConstants.DBMS.ORACLE.equals(dbms)){
+			if (IConstants.DBMS.ORACLE.equals(dbms)) {
 				tableName = tableName.toUpperCase();
-			} else if(IConstants.DBMS.POSTGRESQL.equals(dbms)){
+			} else if (IConstants.DBMS.POSTGRESQL.equals(dbms)) {
 				tableName = tableName.toLowerCase();
 			}
 			List<Column> dbColumnList = tableReader.readTableColumns(tableName);
@@ -117,7 +124,7 @@ public class ColumnComparer {
 
 	}
 
-	private static void process() {
+	private static void process() throws ClassNotFoundException, SQLException {
 		Properties properties = new Properties();
 		try {
 			properties.load(new FileInputStream("config.properties"));
@@ -125,7 +132,7 @@ public class ColumnComparer {
 			e.printStackTrace();
 		}
 		dbms = properties.getProperty("DBMS");
-		
+
 		sqlWriter = SqlWriterFactory.getSqlWriter(dbms);
 
 		DdlReader ddlReader = new DdlReader();
@@ -136,14 +143,18 @@ public class ColumnComparer {
 		// System.out.println("DDL TEXT: " + ddlText);
 
 		DbConnection dbConnection = new DbConnection();
-		Connection conn = dbConnection.connection(properties);
+		Connection conn;
+		conn = dbConnection.connection(properties);
 		tableReader = new TableReader(conn);
 
 		splitDdl(ddlText);
 	}
 
 	public static void main(String[] args) {
-		process();
+		try {
+			process();
+		} catch (ClassNotFoundException | SQLException e) {
+		}
 	}
 }
 

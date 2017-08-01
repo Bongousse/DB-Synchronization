@@ -6,7 +6,7 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 public class DbConnection {
-	public Connection connection(Properties properties) {
+	public Connection connection(Properties properties) throws SQLException, ClassNotFoundException {
 		String dbms = properties.getProperty("DBMS");
 		String ip = properties.getProperty("IP");// "182.162.100.120";
 		String listenerPort = properties.getProperty("PORT"); // "10110";
@@ -31,9 +31,11 @@ public class DbConnection {
 			conn = DriverManager.getConnection(url, id, password);
 			System.out.println("커넥션 성공");
 		} catch (SQLException e) {
-			System.out.println("커넥션 실패");
+			System.out.println("커넥션 실패  error:" + e.getMessage());
+			throw e;
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
+			throw e;
 		}
 
 		return conn;
