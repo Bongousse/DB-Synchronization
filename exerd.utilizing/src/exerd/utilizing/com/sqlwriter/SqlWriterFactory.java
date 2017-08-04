@@ -1,7 +1,7 @@
 package exerd.utilizing.com.sqlwriter;
 
 public class SqlWriterFactory {
-	public static ISqlWriter getSqlWriter(String dbms){
+	public static ASqlWriter getSqlWriter(String dbms){
 		switch(dbms){
 		case "ORACLE":
 			return new OracleSqlWriter();

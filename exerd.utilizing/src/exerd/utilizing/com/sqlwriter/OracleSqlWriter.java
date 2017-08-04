@@ -4,31 +4,30 @@ import java.util.List;
 
 import exerd.utilizing.com.domain.Column;
 
-public class OracleSqlWriter implements ISqlWriter{
+public class OracleSqlWriter extends ASqlWriter {
 
 	@Override
-	public void writeDdl(String tableName, List<Column> columnList) {
+	public String writeDdl(String tableName, List<Column> columnList) {
 		// TODO Auto-generated method stub
-		
+		return null;
 	}
 
 	@Override
-	public void writeAddColumn(String tableName, Column column) {
+	public String writeAddColumn(String tableName, Column column) {
 		// TODO Auto-generated method stub
-		
+		return null;
 	}
 
 	@Override
-	public void writeAlterColumn(String tableName, Column column) {
+	public String writeAlterColumn(String tableName, Column column) {
 		// TODO Auto-generated method stub
-		
+		return null;
 	}
 
 	@Override
-	public void writeDropColumn(String tableName, Column column) {
+	public String writeDropColumn(String tableName, Column column) {
 		// TODO Auto-generated method stub
+		return null;
 	}
 
 }
-
-

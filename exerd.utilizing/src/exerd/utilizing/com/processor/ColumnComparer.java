@@ -12,14 +12,14 @@ import java.util.Properties;
 
 import exerd.utilizing.com.constants.IConstants;
 import exerd.utilizing.com.domain.Column;
-import exerd.utilizing.com.sqlwriter.ISqlWriter;
+import exerd.utilizing.com.sqlwriter.ASqlWriter;
 import exerd.utilizing.com.sqlwriter.SqlWriterFactory;
 
 public class ColumnComparer {
 
 	private TableReader tableReader;
 
-	private ISqlWriter sqlWriter;
+	private ASqlWriter sqlWriter;
 
 	private String dbms;
 
@@ -37,7 +37,7 @@ public class ColumnComparer {
 		}
 		return null;
 	}
-
+	
 	private List<Column> getCompareColumn(String tableName, List<Column> ddlColumnList, List<Column> dbColumnList) {
 		List<Column> resultCompColumnList = new ArrayList<Column>();
 		if (dbColumnList.size() == 0) {

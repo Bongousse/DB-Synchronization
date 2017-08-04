@@ -189,6 +189,13 @@ public class UiMain extends Frame {
 			}
 		}
 	}
+	
+	class GenerateSqlActionListener implements ActionListener {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			
+		}
+	}
 
 	public static void main(String[] args) {
 		new UiMain();
