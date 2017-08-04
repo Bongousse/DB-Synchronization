@@ -6,6 +6,7 @@ public class Column implements Comparable<Column> {
 	private int size;
 	private int nullable;
 	private String comment;
+	private String compTypeCd;
 
 	@Override
 	public String toString() {
@@ -20,6 +21,8 @@ public class Column implements Comparable<Column> {
 		builder.append(nullable);
 		builder.append(", comment=");
 		builder.append(comment);
+		builder.append(", compTypeCd=");
+		builder.append(compTypeCd);
 		builder.append("]");
 		return builder.toString();
 	}
@@ -62,6 +65,14 @@ public class Column implements Comparable<Column> {
 
 	public void setComment(String comment) {
 		this.comment = comment;
+	}
+
+	public String getCompTypeCd() {
+		return compTypeCd;
+	}
+
+	public void setCompTypeCd(String compTypeCd) {
+		this.compTypeCd = compTypeCd;
 	}
 
 	@Override

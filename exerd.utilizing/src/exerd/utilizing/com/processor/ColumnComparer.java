@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import exerd.utilizing.com.constants.IConstants;
@@ -15,13 +17,19 @@ import exerd.utilizing.com.sqlwriter.SqlWriterFactory;
 
 public class ColumnComparer {
 
-	private static TableReader tableReader;
+	private TableReader tableReader;
 
-	private static ISqlWriter sqlWriter;
+	private ISqlWriter sqlWriter;
 
-	private static String dbms;
+	private String dbms;
 
-	private static Column findColumn(List<Column> columnList, String columnName) {
+	private String ddlFilePath;
+
+	private DbConnection dbConnection;
+
+	private Map<String, List<Column>> tableColumnMap;
+
+	private Column findColumn(List<Column> columnList, String columnName) {
 		for (Column column : columnList) {
 			if (columnName.equals(column.getName())) {
 				return column;
@@ -30,11 +38,12 @@ public class ColumnComparer {
 		return null;
 	}
 
-	private static void compareColumn(String tableName, List<Column> ddlColumnList, List<Column> dbColumnList) {
+	private List<Column> getCompareColumn(String tableName, List<Column> ddlColumnList, List<Column> dbColumnList) {
+		List<Column> resultCompColumnList = new ArrayList<Column>();
 		if (dbColumnList.size() == 0) {
 			// case 4: there is no table in db
 			System.out.println("[CASE4] There is no table in database\n");
-			return;
+			return null;
 		}
 
 		int differentColumnCount = 0;
@@ -44,6 +53,7 @@ public class ColumnComparer {
 				// case 1: there is no column in db
 				System.out.println("[CASE1] dbColumn: " + dbColumn + " ddlColumn: " + ddlColumn);
 				// Common: ALTER TABLE 테이블명 ADD 컬럼명 데이터 유형 [NOT NULL];
+				ddlColumn.setCompTypeCd(IConstants.COMP_TYPE_CD.NONE_EXISTENT);
 				sqlWriter.writeAddColumn(tableName, ddlColumn);
 				differentColumnCount++;
 			} else {
@@ -52,28 +62,37 @@ public class ColumnComparer {
 					System.out.println("[CASE2] dbColumn: " + dbColumn + " ddlColumn: " + ddlColumn);
 					// Oracle: ALTER TABLE 테이블명 MODIFY (컬럼명 데이터유형 [NOT NULL]);
 					// PostgreSQL: ALTER TABLE 테이블명 ALTER COLUMN 컬럼명 TYPE 데이터유형;
+					ddlColumn.setCompTypeCd(IConstants.COMP_TYPE_CD.DIFFERENT);
 					sqlWriter.writeAlterColumn(tableName, ddlColumn);
 					differentColumnCount++;
+				} else {
+					ddlColumn.setCompTypeCd(IConstants.COMP_TYPE_CD.EQUAL);
 				}
 			}
+			resultCompColumnList.add(ddlColumn);
 		}
 
 		for (Column dbColumn : dbColumnList) {
 			Column ddlColumn = findColumn(ddlColumnList, dbColumn.getName());
 			if (ddlColumn == null) {
 				// case 3: there is no column in ddl
+				dbColumn.setCompTypeCd(IConstants.COMP_TYPE_CD.UNNECESSARY);
 				System.out.println("[CASE3] dbColumn: " + dbColumn + " ddlColumn: " + ddlColumn);
 				sqlWriter.writeDropColumn(tableName, dbColumn);
 				differentColumnCount++;
+				resultCompColumnList.add(dbColumn);
 			}
 		}
 
 		System.out.println("differentColumnCount: " + differentColumnCount);
-		System.out.println();		
-		
+		System.out.println();
+
+		return resultCompColumnList;
 	}
 
-	private static void splitDdl(String ddlText) {
+	private Map<String, List<Column>> makeTableColumnMap(String ddlText) {
+		tableColumnMap = new LinkedHashMap<String, List<Column>>();
+
 		String[] ddlList = ddlText.split("CREATE TABLE ");
 
 		System.out.println("TABLE SIZE:" + (ddlList.length - 1));
@@ -112,49 +131,63 @@ public class ColumnComparer {
 			}
 			System.out.println("COLUMN LIST: " + columnList);
 
-			if (IConstants.DBMS.ORACLE.equals(dbms)) {
-				tableName = tableName.toUpperCase();
-			} else if (IConstants.DBMS.POSTGRESQL.equals(dbms)) {
-				tableName = tableName.toLowerCase();
-			}
-			List<Column> dbColumnList = tableReader.readTableColumns(tableName);
+			List<Column> dbColumnList = tableReader.getTableColumnList(tableName);
 
-			compareColumn(tableName, columnList, dbColumnList);
+			List<Column> compColumnList = getCompareColumn(tableName, columnList, dbColumnList);
+
+			tableColumnMap.put(tableName, compColumnList);
 		}
 
+		return tableColumnMap;
 	}
 
-	private static void process() throws ClassNotFoundException, SQLException {
+	public Map<String, List<Column>> process() {
+		sqlWriter = SqlWriterFactory.getSqlWriter(dbms);
+
+		DdlReader ddlReader = new DdlReader();
+
+		String ddlText = ddlReader.readDdl(ddlFilePath);
+		// System.out.println("DDL TEXT: " + ddlText);
+
+		try {
+			Connection conn = dbConnection.connection();
+			tableReader = new TableReader(conn, dbms);
+		} catch (ClassNotFoundException | SQLException e) {
+			e.printStackTrace();
+		}
+
+		return makeTableColumnMap(ddlText);
+	}
+
+	public ColumnComparer(Properties properties) {
+		ddlFilePath = properties.getProperty("DDL_FILE_PATH");
+
+		dbms = properties.getProperty("DBMS");
+
+		dbConnection = new DbConnection(properties);
+	}
+
+	public ColumnComparer(String ddlPath, String dbms, String ip, String listenerPort, String sid, String id,
+			String password) {
+		this.ddlFilePath = ddlPath;
+
+		this.dbms = dbms;
+
+		dbConnection = new DbConnection(dbms, ip, listenerPort, sid, id, password);
+	}
+
+	public static void main(String[] args) {
 		Properties properties = new Properties();
 		try {
 			properties.load(new FileInputStream("config.properties"));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		dbms = properties.getProperty("DBMS");
 
-		sqlWriter = SqlWriterFactory.getSqlWriter(dbms);
+		ColumnComparer c = new ColumnComparer(properties);
 
-		DdlReader ddlReader = new DdlReader();
+		c.process();
 
-		String filePath = properties.getProperty("DDL_FILE_PATH");
-
-		String ddlText = ddlReader.readDdl(filePath);
-		// System.out.println("DDL TEXT: " + ddlText);
-
-		DbConnection dbConnection = new DbConnection();
-		Connection conn;
-		conn = dbConnection.connection(properties);
-		tableReader = new TableReader(conn);
-
-		splitDdl(ddlText);
-	}
-
-	public static void main(String[] args) {
-		try {
-			process();
-		} catch (ClassNotFoundException | SQLException e) {
-		}
 	}
 }
 

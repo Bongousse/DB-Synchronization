@@ -6,15 +6,36 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 public class DbConnection {
-	public Connection connection(Properties properties) throws SQLException, ClassNotFoundException {
-		String dbms = properties.getProperty("DBMS");
-		String ip = properties.getProperty("IP");// "182.162.100.120";
-		String listenerPort = properties.getProperty("PORT"); // "10110";
-		String sid = properties.getProperty("SID"); // "orcl";
-		String id = properties.getProperty("ID"); // "kbpoc";
-		String password = properties.getProperty("PASSWORD"); // "infrabxm0204";
+	private String dbms;
+	private String ip;
+	private String listenerPort;
+	private String sid;
+	private String id;
+	private String password;
+	private String driver;
+	private String preUrl;
+	private String url;
 
-		String driver = null, preUrl = null, url = null;
+	public DbConnection(Properties properties) {
+		dbms = properties.getProperty("DBMS");
+		ip = properties.getProperty("IP");// "182.162.100.120";
+		listenerPort = properties.getProperty("PORT"); // "10110";
+		sid = properties.getProperty("SID"); // "orcl";
+		id = properties.getProperty("ID"); // "kbpoc";
+		password = properties.getProperty("PASSWORD"); // "infrabxm0204";
+	}
+
+	public DbConnection(String dbms, String ip, String listenerPort, String sid, String id, String password) {
+		this.dbms = dbms;
+		this.ip = ip;
+		this.listenerPort = listenerPort;
+		this.sid = sid;
+		this.id = id;
+		this.password = password;
+	}
+
+	public Connection connection() throws SQLException, ClassNotFoundException {
+
 		if ("ORACLE".equals(dbms)) {
 			driver = "oracle.jdbc.driver.OracleDriver";
 			preUrl = "jdbc:oracle:thin:@";
