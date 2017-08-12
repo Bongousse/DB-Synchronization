@@ -5,6 +5,7 @@ import java.util.Map;
 
 import exerd.utilizing.com.constants.IConstants;
 import exerd.utilizing.com.domain.Column;
+import exerd.utilizing.com.domain.Table;
 
 public abstract class ASqlWriter {
 	public abstract String writeDdl(String tableName, List<Column> columnList);
@@ -15,14 +16,20 @@ public abstract class ASqlWriter {
 
 	public abstract String writeDropColumn(String tableName, Column column);
 
-	public String generateSql(Map<String, List<Column>> tableColumnMap) {
+	public String generateSql(Map<Table, List<Column>> tableColumnMap) {
+
 		StringBuffer strBuffer = new StringBuffer();
 
-		for(String tableName : tableColumnMap.keySet()){
+		for (Table table : tableColumnMap.keySet()) {
+			String tableName = table.getTableName();
 			List<Column> columnList = tableColumnMap.get(tableName);
-			
-			for(Column column : columnList){
-				switch(column.getCompTypeCd()){
+
+			if (columnList == null) {
+				continue;
+			}
+
+			for (Column column : columnList) {
+				switch (column.getCompTypeCd()) {
 				case IConstants.COMP_TYPE_CD.EQUAL:
 					break;
 				case IConstants.COMP_TYPE_CD.DIFFERENT:
@@ -38,7 +45,7 @@ public abstract class ASqlWriter {
 			}
 			strBuffer.append("\n");
 		}
-		
+
 		return strBuffer.toString();
 	}
 }

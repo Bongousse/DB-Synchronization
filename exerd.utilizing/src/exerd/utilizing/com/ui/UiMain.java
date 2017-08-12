@@ -2,21 +2,44 @@ package exerd.utilizing.com.ui;
 
 import java.awt.Button;
 import java.awt.Choice;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.Font;
-import java.awt.Frame;
+import java.awt.Image;
 import java.awt.Label;
-import java.awt.List;
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.beans.PropertyChangeEvent;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import exerd.utilizing.com.domain.Column;
-import exerd.utilizing.com.processor.ColumnComparer;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.DefaultListModel;
+import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+import javax.swing.JList;
+import javax.swing.JProgressBar;
+import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 
-public class UiMain extends Frame {
+import exerd.utilizing.com.constants.IConstants;
+import exerd.utilizing.com.domain.Column;
+import exerd.utilizing.com.domain.Table;
+import exerd.utilizing.com.processor.ColumnComparer;
+import exerd.utilizing.com.sqlwriter.ASqlWriter;
+import exerd.utilizing.com.sqlwriter.SqlWriterFactory;
+
+@SuppressWarnings({ "unchecked", "rawtypes" })
+public class UiMain extends JFrame {
 	private static final long serialVersionUID = 1L;
 
 	TextField ddlPathTx = new TextField();
@@ -26,10 +49,13 @@ public class UiMain extends Frame {
 	TextField sidTx = new TextField();
 	TextField userIdTx = new TextField();
 	TextField passwordTx = new TextField();
-	List tableList = new List();
-	List columnList = new List();
+	JProgressBar pBar = new JProgressBar();
+	JList tableList = new JList<>();
+	JList columnList = new JList<>();
 
-	Map<String, java.util.List<Column>> compTableMap;
+	Map<Table, java.util.List<Column>> compTableMap;
+
+	private final Map<String, ImageIcon> imageMap;
 
 	public UiMain() {
 		super("DB Synchronization");
@@ -66,11 +92,30 @@ public class UiMain extends Frame {
 		Button generateBtn = new Button("Generate Query !");
 		generateBtn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				// TODO
+				ASqlWriter sqlWriter = SqlWriterFactory.getSqlWriter(dbmsCh.getSelectedItem());
+				String query = sqlWriter.generateSql(compTableMap);
+				FileWriter fw = null;
+				try {
+					fw = new FileWriter("./result/query.sql");
+					fw.write(query);
+					fw.flush();
+				} catch (IOException ioe) {
+					ioe.printStackTrace();
+				} finally {
+					try {
+						fw.close();
+					} catch (IOException ioe) {
+						ioe.printStackTrace();
+					}
+				}
 			}
 		});
 
-		tableList.addActionListener(new TableListActionListener());
+		pBar.setStringPainted(true);
+		pBar.setMinimum(0);
+		pBar.setMaximum(100);
+
+		tableList.addMouseListener(new TableListActionListener());
 
 		Font f = new Font("돋움", 10, 20);
 		ddlPathLb.setFont(f);
@@ -107,23 +152,31 @@ public class UiMain extends Frame {
 		sidLb.setBounds(xInit + xInterval * 2, yInit + yInterval * 2, 50, 20);
 		userIdLb.setBounds(xInit, yInit + yInterval * 3, 100, 20);
 		passwordLb.setBounds(xInit + xInterval, yInit + yInterval * 3, 100, 20);
-		tableListLb.setBounds(xInit, yInit + yInterval * 5, 150, 20);
-		columnListLb.setBounds(xInit + xInterval + 70, yInit + yInterval * 5, 150, 20);
+		tableListLb.setBounds(xInit, yInit + yInterval * 5 + 50, 150, 20);
+		columnListLb.setBounds(xInit + xInterval + 70, yInit + yInterval * 5 + 50, 150, 20);
 
 		xInit += 100;
 		yInit -= 4;
 		ddlPathTx.setBounds(xInit, yInit, 500, 30);
 		browseBtn.setBounds(xInit + xInterval * 2 - 80, yInit - 2, 130, 32);
 		dbmsCh.setBounds(xInit, yInit + yInterval, 165, 30);
-		ipTx.setBounds(xInit, yInit + yInterval * 2, 150, 30);
+		ipTx.setBounds(xInit, yInit + yInterval * 2, 170, 30);
 		portTx.setBounds(xInit + xInterval, yInit + yInterval * 2, 100, 30);
 		sidTx.setBounds(xInit + xInterval * 2 - 50, yInit + yInterval * 2, 100, 30);
-		userIdTx.setBounds(xInit, yInit + yInterval * 3, 150, 30);
+		userIdTx.setBounds(xInit, yInit + yInterval * 3, 170, 30);
 		passwordTx.setBounds(xInit + xInterval, yInit + yInterval * 3, 150, 30);
 		compareBtn.setBounds(xInit + xInterval - 100, yInit + yInterval * 4, 130, 32);
-		tableList.setBounds(xInit - 100, yInit + yInterval * 5 + 50, 360, 200);
-		columnList.setBounds(xInit + xInterval - 30, yInit + yInterval * 5 + 50, 360, 200);
-		generateBtn.setBounds(xInit + xInterval - 160, yInit + yInterval * 10, 250, 32);
+		pBar.setBounds(20, yInit + yInterval * 4 + 50, 750, 32);
+		JScrollPane tableListScroll = new JScrollPane(tableList);
+		tableListScroll.setBounds(xInit - 100, yInit + yInterval * 5 + 100, 360, 200);
+		JScrollPane columnListScroll = new JScrollPane(columnList);
+		columnListScroll.setBounds(xInit + xInterval - 30, yInit + yInterval * 5 + 100, 360, 200);
+		generateBtn.setBounds(xInit + xInterval - 160, yInit + yInterval * 10 + 50, 250, 32);
+
+		tableList.setCellRenderer(new TableListRenderer());
+
+		imageMap = createImageMap();
+		columnList.setCellRenderer(new ColumnListRenderer());
 
 		add(ddlPathLb);
 		add(dbmsLb);
@@ -146,18 +199,72 @@ public class UiMain extends Frame {
 		add(userIdTx);
 		add(passwordTx);
 		add(compareBtn);
-		add(tableList);
-		add(columnList);
+		add(pBar);
+
+		getContentPane().add(tableListScroll);
+		getContentPane().add(columnListScroll);
 		add(generateBtn);
 
-		setSize(800, 750);
+		setSize(800, 800);
 		setResizable(false);
 		setVisible(true);
+
+		ddlPathTx.setText("C:\\Users\\Yong\\git\\eclipse.utilizing\\exerd.utilizing\\bxm_ddl.txt");
+		ipTx.setText("182.162.100.120");
+		portTx.setText("10110");
+		sidTx.setText("orcl");
+		userIdTx.setText("kbpoc");
+		passwordTx.setText("infrabxm0204");
+	}
+
+	public void updateProgressBar(int value) {
+		pBar.setValue(value);
+	}
+
+	public void safeUpdateProgressBar(final int value) {
+		if (SwingUtilities.isEventDispatchThread()) {
+			updateProgressBar(value);
+		} else {
+			SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+					updateProgressBar(value);
+				}
+			});
+		}
+	}
+
+	public class MyWorker extends SwingWorker<Void, Integer> {
+
+		private ColumnComparer c;
+
+		public MyWorker(ColumnComparer c) {
+			this.c = c;
+		}
+
+		@Override
+		protected Void doInBackground() throws Exception {
+			// More work was done
+			int value = 0;
+			while ((value = c.getCurrentProgressPercent()) < 100) {
+				Thread.sleep(100); // Illustrating long-running code.
+				publish(value);
+			}
+			publish(value);
+
+			return null;
+		}
+
+		@Override
+		protected void process(List<Integer> chunks) {
+			int value = chunks.get(chunks.size() - 1);
+			pBar.setValue(value);
+		}
 	}
 
 	class CompareBtnActionListener implements ActionListener {
 		@Override
 		public void actionPerformed(ActionEvent e) {
+			pBar.setValue(0);
 			tableList.removeAll();
 
 			String ddlPath = ddlPathTx.getText();
@@ -168,32 +275,152 @@ public class UiMain extends Frame {
 			String userId = userIdTx.getText();
 			String password = passwordTx.getText();
 
-			ColumnComparer c = new ColumnComparer(ddlPath, dbms, ip, port, sid, userId, password);
-			compTableMap = c.process();
+			final ColumnComparer c = new ColumnComparer(ddlPath, dbms, ip, port, sid, userId, password);
 
-			for (String tableName : compTableMap.keySet()) {
-				tableList.add(tableName);
-			}
+			// new Thread(new Runnable() {
+			// public void run() {
+			// while (pBar.getValue() < 100) {
+			// pBar.setValue(c.getCurrentProgressPercent());
+			// pBar.repaint();
+			// try {
+			// Thread.sleep(1000);
+			// } catch (InterruptedException e) {
+			// // TODO Auto-generated catch block
+			// e.printStackTrace();
+			// }
+			// }
+			// }
+			// }).start();
+
+			new MyWorker(c).execute();
+
+			new Thread(new Runnable() {
+				public void run() {
+					compTableMap = c.process();
+					DefaultListModel listModel = new DefaultListModel<>();
+
+					for (Table table : compTableMap.keySet()) {
+						listModel.addElement(table);
+					}
+
+					tableList.setModel(listModel);
+				}
+			}).start();
+
 		}
+
 	}
 
-	class TableListActionListener implements ActionListener {
+	class TableListActionListener implements MouseListener {
+
 		@Override
-		public void actionPerformed(ActionEvent e) {
+		public void mouseClicked(MouseEvent e) {
 			columnList.removeAll();
 
-			String tableName = e.getActionCommand();
-			java.util.List<Column> compColumnList = compTableMap.get(tableName);
-			for (Column column : compColumnList) {
-				columnList.add(column.getName());
+			Table table = (Table) tableList.getSelectedValue();
+			java.util.List<Column> compColumnList = compTableMap.get(table);
+
+			DefaultListModel listModel = new DefaultListModel<>();
+			if (compColumnList != null) {
+				for (Column column : compColumnList) {
+					listModel.addElement(column);
+				}
 			}
+			columnList.setModel(listModel);
+
+		}
+
+		@Override
+		public void mousePressed(MouseEvent e) {
+		}
+
+		@Override
+		public void mouseReleased(MouseEvent e) {
+		}
+
+		@Override
+		public void mouseEntered(MouseEvent e) {
+		}
+
+		@Override
+		public void mouseExited(MouseEvent e) {
 		}
 	}
-	
+
 	class GenerateSqlActionListener implements ActionListener {
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			
+
+		}
+	}
+
+	public class TableListRenderer extends DefaultListCellRenderer {
+
+		private static final long serialVersionUID = 5138435182832745600L;
+
+		@Override
+		public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
+				boolean cellHasFocus) {
+
+			Table table = (Table) value;
+
+			if (table.isNoneExistent()) {
+				setText(table.getTableName());
+				setForeground(Color.RED);
+			} else {
+				setText(table.getTableName() + "(" + table.getDifferentColumnCount() + ")");
+				if (table.getDifferentColumnCount() == 0) {
+					setForeground(Color.BLACK);
+				} else {
+					setForeground(Color.BLUE);
+				}
+			}
+			setFont(new Font("돋움", 10, 20));
+			return this;
+		}
+	}
+
+	public class ColumnListRenderer extends DefaultListCellRenderer {
+
+		private static final long serialVersionUID = 5138435182732745600L;
+
+		@Override
+		public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
+				boolean cellHasFocus) {
+
+			Column column = (Column) value;
+
+			setText(column.getName());
+			setIcon(imageMap.get(column.getCompTypeCd()));
+			setFont(new Font("돋움", 10, 20));
+			return this;
+		}
+	}
+
+	private Map<String, ImageIcon> createImageMap() {
+		Map<String, ImageIcon> map = new HashMap<>();
+		try {
+			map.put(IConstants.COMP_TYPE_CD.EQUAL, resizeIcon(new ImageIcon("./icon/equal.png")));
+			map.put(IConstants.COMP_TYPE_CD.DIFFERENT, resizeIcon(new ImageIcon("./icon/different.png")));
+			map.put(IConstants.COMP_TYPE_CD.NONE_EXISTENT, resizeIcon(new ImageIcon("./icon/none_existent.png")));
+			map.put(IConstants.COMP_TYPE_CD.UNNECESSARY, resizeIcon(new ImageIcon("./icon/unnecessary.png")));
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+		return map;
+	}
+
+	private ImageIcon resizeIcon(ImageIcon originalIcon) {
+		Image image = originalIcon.getImage(); // transform it
+		Image newimg = image.getScaledInstance(20, 20, java.awt.Image.SCALE_SMOOTH);
+		originalIcon = new ImageIcon(newimg);
+		return originalIcon;
+	}
+
+	public void propertyChange(PropertyChangeEvent evt) {
+		if ("progress" == evt.getPropertyName()) {
+			int progress = (Integer) evt.getNewValue();
+			pBar.setValue(progress);
 		}
 	}
 
