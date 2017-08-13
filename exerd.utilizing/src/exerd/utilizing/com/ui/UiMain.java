@@ -32,6 +32,8 @@ import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 
+import org.apache.log4j.xml.DOMConfigurator;
+
 import exerd.utilizing.com.constants.IConstants;
 import exerd.utilizing.com.domain.CompColumn;
 import exerd.utilizing.com.domain.Table;
@@ -55,6 +57,8 @@ public class UiMain extends JFrame {
 	JProgressBar pBar = new JProgressBar();
 	JList tableList = new JList<>();
 	JList columnList = new JList<>();
+
+	String generateQueryPath = "./result/sync.sql";
 
 	Map<Table, java.util.List<CompColumn>> compTableMap;
 
@@ -101,7 +105,7 @@ public class UiMain extends JFrame {
 				String query = sqlWriter.generateSql(compTableMap);
 				FileWriter fw = null;
 				try {
-					fw = new FileWriter("./result/query.sql");
+					fw = new FileWriter(generateQueryPath);
 					fw.write(query);
 					fw.flush();
 				} catch (IOException ioe) {
@@ -113,6 +117,8 @@ public class UiMain extends JFrame {
 						ioe.printStackTrace();
 					}
 				}
+
+				new FileReader(generateQueryPath);
 			}
 		});
 
@@ -438,7 +444,7 @@ public class UiMain extends JFrame {
 			if (isSelected) {
 				setBackground(Color.LIGHT_GRAY);
 			}
-			
+
 			if (column.getDdlColumn() != null) {
 				setText(column.getDdlColumn().getName());
 			} else {
@@ -478,6 +484,8 @@ public class UiMain extends JFrame {
 	}
 
 	public static void main(String[] args) {
+		String log4jXml = "./config/log4j.xml";
+		DOMConfigurator.configureAndWatch(log4jXml);
 		new UiMain();
 	}
 }

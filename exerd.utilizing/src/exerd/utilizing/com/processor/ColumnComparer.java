@@ -10,18 +10,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import exerd.utilizing.com.constants.IConstants;
 import exerd.utilizing.com.domain.Column;
 import exerd.utilizing.com.domain.CompColumn;
 import exerd.utilizing.com.domain.Table;
-import exerd.utilizing.com.sqlwriter.ASqlWriter;
-import exerd.utilizing.com.sqlwriter.SqlWriterFactory;
 
 public class ColumnComparer {
 
-	private TableReader tableReader;
+	private final Logger logger = LoggerFactory.getLogger(ColumnComparer.class);
 
-	private ASqlWriter sqlWriter;
+	private TableReader tableReader;
 
 	private String dbms;
 
@@ -43,12 +44,11 @@ public class ColumnComparer {
 	}
 
 	private List<CompColumn> getCompareColumn(Table table, List<Column> ddlColumnList, List<Column> dbColumnList) {
-		String tableName = table.getTableName();
 		List<CompColumn> result = new ArrayList<CompColumn>();
 		if (dbColumnList.size() == 0) {
 			table.setNoneExistent(true);
 			// case 4: there is no table in db
-			System.out.println("[CASE4] There is no table in database\n");
+			logger.trace("[CASE4] There is no table in database");
 
 			for (Column ddlColumn : ddlColumnList) {
 				CompColumn compColumn = new CompColumn();
@@ -71,18 +71,16 @@ public class ColumnComparer {
 				// case 1: there is no column in db
 				// Common: ALTER TABLE 테이블명 ADD 컬럼명 데이터 유형 [NOT NULL];
 				compColumn.setCompTypeCd(IConstants.COMP_TYPE_CD.NONE_EXISTENT);
-				sqlWriter.writeAddColumn(tableName, ddlColumn);
 				differentColumnCount++;
-				System.out.println("[CASE1] dbColumn: " + dbColumn + " ddlColumn: " + ddlColumn);
+				logger.trace("[CASE1] dbColumn: " + dbColumn + " ddlColumn: " + ddlColumn);
 			} else {
 				if (ddlColumn.compareTo(dbColumn) != 0) {
 					// case 2: there is difference between ddl and db
 					// Oracle: ALTER TABLE 테이블명 MODIFY (컬럼명 데이터유형 [NOT NULL]);
 					// PostgreSQL: ALTER TABLE 테이블명 ALTER COLUMN 컬럼명 TYPE 데이터유형;
 					compColumn.setCompTypeCd(IConstants.COMP_TYPE_CD.DIFFERENT);
-					sqlWriter.writeAlterColumn(tableName, ddlColumn);
 					differentColumnCount++;
-					System.out.println("[CASE2] dbColumn: " + dbColumn + " ddlColumn: " + ddlColumn);
+					logger.trace("[CASE2] dbColumn: " + dbColumn + " ddlColumn: " + ddlColumn);
 				} else {
 					compColumn.setCompTypeCd(IConstants.COMP_TYPE_CD.EQUAL);
 				}
@@ -100,15 +98,13 @@ public class ColumnComparer {
 
 				// case 3: there is no column in ddl
 				compColumn.setCompTypeCd(IConstants.COMP_TYPE_CD.UNNECESSARY);
-				sqlWriter.writeDropColumn(tableName, dbColumn);
 				differentColumnCount++;
 				result.add(compColumn);
-				System.out.println("[CASE3] dbColumn: " + dbColumn + " ddlColumn: " + ddlColumn);
+				logger.trace("[CASE3] dbColumn: " + dbColumn + " ddlColumn: " + ddlColumn);
 			}
 		}
 
-		System.out.println("differentColumnCount: " + differentColumnCount);
-		System.out.println();
+		logger.debug("differentColumnCount: " + differentColumnCount + "\n");
 
 		table.setDifferentColumnCount(differentColumnCount);
 
@@ -126,7 +122,7 @@ public class ColumnComparer {
 
 		String[] ddlList = ddlText.split("CREATE TABLE ");
 
-		System.out.println("TABLE SIZE:" + (ddlList.length - 1));
+		logger.info("TABLE SIZE:" + (ddlList.length - 1));
 		totalTableCount = ddlList.length - 1;
 		for (String ddl : ddlList) {
 			if (ddl.equals(""))
@@ -134,15 +130,15 @@ public class ColumnComparer {
 			currentTableCount++;
 
 			String tableName = ddl.substring(0, ddl.indexOf("(")).trim();
-			System.out.println("TABLE NAME:" + tableName);
+			logger.debug("TABLE NAME:" + tableName);
 
 			String content = ddl.substring(ddl.indexOf("(") + 1, ddl.indexOf(");", ddl.indexOf("("))).trim();
 			String[] columnStringList = content.split("\n");
 			if (columnStringList.length == 1 && columnStringList[0].equals("")) {
-				System.out.println("COLUMN SIZE:" + 0);
+				logger.debug("COLUMN SIZE:" + 0);
 				continue;
 			} else {
-				System.out.println("COLUMN SIZE:" + columnStringList.length);
+				logger.debug("COLUMN SIZE:" + columnStringList.length);
 			}
 
 			List<Column> columnList = new ArrayList<Column>();
@@ -171,7 +167,7 @@ public class ColumnComparer {
 
 				columnList.add(column);
 			}
-			System.out.println("COLUMN LIST: " + columnList);
+			logger.debug("COLUMN LIST: " + columnList);
 
 			Table table = new Table();
 			table.setTableName(tableName);
@@ -187,8 +183,6 @@ public class ColumnComparer {
 	}
 
 	public Map<Table, List<CompColumn>> process() {
-		sqlWriter = SqlWriterFactory.getSqlWriter(dbms);
-
 		DdlReader ddlReader = new DdlReader();
 
 		String ddlText = ddlReader.readDdl(ddlFilePath);

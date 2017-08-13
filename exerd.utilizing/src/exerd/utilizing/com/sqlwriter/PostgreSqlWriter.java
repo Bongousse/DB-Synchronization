@@ -3,11 +3,12 @@ package exerd.utilizing.com.sqlwriter;
 import java.util.List;
 
 import exerd.utilizing.com.domain.Column;
+import exerd.utilizing.com.domain.CompColumn;
 
 public class PostgreSqlWriter extends ASqlWriter {
 
 	@Override
-	public String writeDdl(String tableName, List<Column> columnList) {
+	public String writeDdl(String tableName, List<CompColumn> columnList) {
 		// TODO Auto-generated method stub
 		return null;
 	}

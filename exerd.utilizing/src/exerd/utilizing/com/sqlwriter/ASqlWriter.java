@@ -9,7 +9,7 @@ import exerd.utilizing.com.domain.CompColumn;
 import exerd.utilizing.com.domain.Table;
 
 public abstract class ASqlWriter {
-	public abstract String writeDdl(String tableName, List<Column> columnList);
+	public abstract String writeDdl(String tableName, List<CompColumn> columnList);
 
 	public abstract String writeAddColumn(String tableName, Column column);
 
@@ -23,28 +23,41 @@ public abstract class ASqlWriter {
 
 		for (Table table : tableColumnMap.keySet()) {
 			String tableName = table.getTableName();
-			List<CompColumn> columnList = tableColumnMap.get(tableName);
+			List<CompColumn> columnList = tableColumnMap.get(table);
 
 			if (columnList == null) {
 				continue;
 			}
 
-			for (CompColumn compColumn : columnList) {
-				switch (compColumn.getCompTypeCd()) {
-				case IConstants.COMP_TYPE_CD.EQUAL:
-					break;
-				case IConstants.COMP_TYPE_CD.DIFFERENT:
-					strBuffer.append(writeAlterColumn(tableName, compColumn.getDdlColumn()));
-					break;
-				case IConstants.COMP_TYPE_CD.NONE_EXISTENT:
-					strBuffer.append(writeAddColumn(tableName, compColumn.getDdlColumn()));
-					break;
-				case IConstants.COMP_TYPE_CD.UNNECESSARY:
-					strBuffer.append(writeDropColumn(tableName, compColumn.getDbColumn()));
-					break;
+			if (table.isNoneExistent()) {
+				strBuffer.append("--" + tableName + "\n");
+				strBuffer.append(writeDdl(tableName, columnList));
+				strBuffer.append("\n");
+			} else {
+				boolean firstFlag = true;
+				for (CompColumn compColumn : columnList) {
+					if (firstFlag && !IConstants.COMP_TYPE_CD.EQUAL.equals(compColumn.getCompTypeCd())) {
+						strBuffer.append("--" + tableName + "\n");
+						firstFlag = false;
+					}
+					switch (compColumn.getCompTypeCd()) {
+					case IConstants.COMP_TYPE_CD.EQUAL:
+						break;
+					case IConstants.COMP_TYPE_CD.DIFFERENT:
+						strBuffer.append(writeAlterColumn(tableName, compColumn.getDdlColumn()) + "\n");
+						break;
+					case IConstants.COMP_TYPE_CD.NONE_EXISTENT:
+						strBuffer.append(writeAddColumn(tableName, compColumn.getDdlColumn()) + "\n");
+						break;
+					case IConstants.COMP_TYPE_CD.UNNECESSARY:
+						strBuffer.append(writeDropColumn(tableName, compColumn.getDbColumn()) + "\n");
+						break;
+					}
+				}
+				if (!firstFlag) {
+					strBuffer.append("\n");
 				}
 			}
-			strBuffer.append("\n");
 		}
 
 		return strBuffer.toString();
