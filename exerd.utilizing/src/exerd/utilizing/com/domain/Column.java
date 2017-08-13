@@ -6,7 +6,6 @@ public class Column implements Comparable<Column> {
 	private int size;
 	private int nullable;
 	private String comment;
-	private String compTypeCd;
 
 	@Override
 	public String toString() {
@@ -21,8 +20,6 @@ public class Column implements Comparable<Column> {
 		builder.append(nullable);
 		builder.append(", comment=");
 		builder.append(comment);
-		builder.append(", compTypeCd=");
-		builder.append(compTypeCd);
 		builder.append("]");
 		return builder.toString();
 	}
@@ -67,18 +64,10 @@ public class Column implements Comparable<Column> {
 		this.comment = comment;
 	}
 
-	public String getCompTypeCd() {
-		return compTypeCd;
-	}
-
-	public void setCompTypeCd(String compTypeCd) {
-		this.compTypeCd = compTypeCd;
-	}
-
 	@Override
 	public int compareTo(Column o) {
 		if (this.getName().equals(o.getName()) && this.getType().equals(o.getType())
-				&& (this.getType().equals("BYTEA") || this.getType().equals("BLOB"))
+				&& (this.getType().equals("BYTEA") || this.getType().equals("BLOB") || this.getType().equals("CLOB"))
 				&& this.getNullable() == o.getNullable()) {
 			return 0;
 		} else if (this.getName().equals(o.getName()) && this.getType().equals(o.getType())

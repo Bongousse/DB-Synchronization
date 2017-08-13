@@ -28,11 +28,12 @@ import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
+import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 
 import exerd.utilizing.com.constants.IConstants;
-import exerd.utilizing.com.domain.Column;
+import exerd.utilizing.com.domain.CompColumn;
 import exerd.utilizing.com.domain.Table;
 import exerd.utilizing.com.processor.ColumnComparer;
 import exerd.utilizing.com.sqlwriter.ASqlWriter;
@@ -49,11 +50,13 @@ public class UiMain extends JFrame {
 	TextField sidTx = new TextField();
 	TextField userIdTx = new TextField();
 	TextField passwordTx = new TextField();
+	TextField ddlColumnTx = new TextField();
+	TextField dbColumnTx = new TextField();
 	JProgressBar pBar = new JProgressBar();
 	JList tableList = new JList<>();
 	JList columnList = new JList<>();
 
-	Map<Table, java.util.List<Column>> compTableMap;
+	Map<Table, java.util.List<CompColumn>> compTableMap;
 
 	private final Map<String, ImageIcon> imageMap;
 
@@ -77,6 +80,8 @@ public class UiMain extends JFrame {
 		Label passwordLb = new Label("Password:");
 		Label tableListLb = new Label("Table List:");
 		Label columnListLb = new Label("Column List:");
+		Label ddlColumnLb = new Label("DDL Column:");
+		Label dbColumnLb = new Label("DB Column:");
 
 		dbmsCh.add("POSTGRESQL");
 		dbmsCh.add("ORACLE");
@@ -115,7 +120,9 @@ public class UiMain extends JFrame {
 		pBar.setMinimum(0);
 		pBar.setMaximum(100);
 
+		tableList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		tableList.addMouseListener(new TableListActionListener());
+		columnList.addMouseListener(new ColumnListActionListener());
 
 		Font f = new Font("돋움", 10, 20);
 		ddlPathLb.setFont(f);
@@ -127,6 +134,8 @@ public class UiMain extends JFrame {
 		passwordLb.setFont(f);
 		tableListLb.setFont(f);
 		columnListLb.setFont(f);
+		ddlColumnLb.setFont(f);
+		dbColumnLb.setFont(f);
 
 		ddlPathTx.setFont(f);
 		dbmsCh.setFont(f);
@@ -141,6 +150,12 @@ public class UiMain extends JFrame {
 		tableList.setFont(f);
 		columnList.setFont(f);
 
+		Font f2 = new Font("돋움", 10, 15);
+		ddlColumnTx.setFont(f2);
+		ddlColumnTx.setEditable(false);
+		dbColumnTx.setFont(f2);
+		dbColumnTx.setEditable(false);
+
 		int xInit = 30;
 		int xInterval = 300;
 		int yInit = 70;
@@ -154,6 +169,8 @@ public class UiMain extends JFrame {
 		passwordLb.setBounds(xInit + xInterval, yInit + yInterval * 3, 100, 20);
 		tableListLb.setBounds(xInit, yInit + yInterval * 5 + 50, 150, 20);
 		columnListLb.setBounds(xInit + xInterval + 70, yInit + yInterval * 5 + 50, 150, 20);
+		ddlColumnLb.setBounds(xInit, yInit + yInterval * 10, 130, 20);
+		dbColumnLb.setBounds(xInit, yInit + yInterval * 11 - 30, 130, 20);
 
 		xInit += 100;
 		yInit -= 4;
@@ -168,10 +185,12 @@ public class UiMain extends JFrame {
 		compareBtn.setBounds(xInit + xInterval - 100, yInit + yInterval * 4, 130, 32);
 		pBar.setBounds(20, yInit + yInterval * 4 + 50, 750, 32);
 		JScrollPane tableListScroll = new JScrollPane(tableList);
-		tableListScroll.setBounds(xInit - 100, yInit + yInterval * 5 + 100, 360, 200);
+		tableListScroll.setBounds(xInit - 100, yInit + yInterval * 5 + 90, 360, 200);
 		JScrollPane columnListScroll = new JScrollPane(columnList);
-		columnListScroll.setBounds(xInit + xInterval - 30, yInit + yInterval * 5 + 100, 360, 200);
-		generateBtn.setBounds(xInit + xInterval - 160, yInit + yInterval * 10 + 50, 250, 32);
+		columnListScroll.setBounds(xInit + xInterval - 30, yInit + yInterval * 5 + 90, 360, 200);
+		ddlColumnTx.setBounds(xInit + 30, yInit + yInterval * 10, 600, 30);
+		dbColumnTx.setBounds(xInit + 30, yInit + yInterval * 11 - 30, 600, 30);
+		generateBtn.setBounds(xInit + xInterval - 160, yInit + yInterval * 10 + 100, 250, 32);
 
 		tableList.setCellRenderer(new TableListRenderer());
 
@@ -189,6 +208,8 @@ public class UiMain extends JFrame {
 		add(columnListLb);
 		add(tableListLb);
 		add(columnListLb);
+		add(ddlColumnLb);
+		add(dbColumnLb);
 
 		add(ddlPathTx);
 		add(browseBtn);
@@ -200,12 +221,13 @@ public class UiMain extends JFrame {
 		add(passwordTx);
 		add(compareBtn);
 		add(pBar);
-
 		getContentPane().add(tableListScroll);
 		getContentPane().add(columnListScroll);
+		add(ddlColumnTx);
+		add(dbColumnTx);
 		add(generateBtn);
 
-		setSize(800, 800);
+		setSize(800, 850);
 		setResizable(false);
 		setVisible(true);
 
@@ -233,11 +255,11 @@ public class UiMain extends JFrame {
 		}
 	}
 
-	public class MyWorker extends SwingWorker<Void, Integer> {
+	public class ProgressUpdateWorker extends SwingWorker<Void, Integer> {
 
 		private ColumnComparer c;
 
-		public MyWorker(ColumnComparer c) {
+		public ProgressUpdateWorker(ColumnComparer c) {
 			this.c = c;
 		}
 
@@ -277,22 +299,7 @@ public class UiMain extends JFrame {
 
 			final ColumnComparer c = new ColumnComparer(ddlPath, dbms, ip, port, sid, userId, password);
 
-			// new Thread(new Runnable() {
-			// public void run() {
-			// while (pBar.getValue() < 100) {
-			// pBar.setValue(c.getCurrentProgressPercent());
-			// pBar.repaint();
-			// try {
-			// Thread.sleep(1000);
-			// } catch (InterruptedException e) {
-			// // TODO Auto-generated catch block
-			// e.printStackTrace();
-			// }
-			// }
-			// }
-			// }).start();
-
-			new MyWorker(c).execute();
+			new ProgressUpdateWorker(c).execute();
 
 			new Thread(new Runnable() {
 				public void run() {
@@ -318,16 +325,50 @@ public class UiMain extends JFrame {
 			columnList.removeAll();
 
 			Table table = (Table) tableList.getSelectedValue();
-			java.util.List<Column> compColumnList = compTableMap.get(table);
+			java.util.List<CompColumn> compColumnList = compTableMap.get(table);
 
 			DefaultListModel listModel = new DefaultListModel<>();
 			if (compColumnList != null) {
-				for (Column column : compColumnList) {
+				for (CompColumn column : compColumnList) {
 					listModel.addElement(column);
 				}
 			}
 			columnList.setModel(listModel);
 
+		}
+
+		@Override
+		public void mousePressed(MouseEvent e) {
+		}
+
+		@Override
+		public void mouseReleased(MouseEvent e) {
+		}
+
+		@Override
+		public void mouseEntered(MouseEvent e) {
+		}
+
+		@Override
+		public void mouseExited(MouseEvent e) {
+		}
+	}
+
+	class ColumnListActionListener implements MouseListener {
+
+		@Override
+		public void mouseClicked(MouseEvent e) {
+			CompColumn compColumn = (CompColumn) columnList.getSelectedValue();
+			if (compColumn.getDdlColumn() != null) {
+				ddlColumnTx.setText(compColumn.getDdlColumn().toString());
+			} else {
+				ddlColumnTx.setText("There is no column");
+			}
+			if (compColumn.getDbColumn() != null) {
+				dbColumnTx.setText(compColumn.getDbColumn().toString());
+			} else {
+				dbColumnTx.setText("There is no column");
+			}
 		}
 
 		@Override
@@ -362,6 +403,10 @@ public class UiMain extends JFrame {
 		public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
 				boolean cellHasFocus) {
 
+			setBackground(Color.WHITE);
+			if (isSelected) {
+				setBackground(Color.LIGHT_GRAY);
+			}
 			Table table = (Table) value;
 
 			if (table.isNoneExistent()) {
@@ -388,9 +433,17 @@ public class UiMain extends JFrame {
 		public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
 				boolean cellHasFocus) {
 
-			Column column = (Column) value;
-
-			setText(column.getName());
+			CompColumn column = (CompColumn) value;
+			setBackground(Color.WHITE);
+			if (isSelected) {
+				setBackground(Color.LIGHT_GRAY);
+			}
+			
+			if (column.getDdlColumn() != null) {
+				setText(column.getDdlColumn().getName());
+			} else {
+				setText(column.getDbColumn().getName());
+			}
 			setIcon(imageMap.get(column.getCompTypeCd()));
 			setFont(new Font("돋움", 10, 20));
 			return this;

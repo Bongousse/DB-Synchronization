@@ -12,6 +12,7 @@ import java.util.Properties;
 
 import exerd.utilizing.com.constants.IConstants;
 import exerd.utilizing.com.domain.Column;
+import exerd.utilizing.com.domain.CompColumn;
 import exerd.utilizing.com.domain.Table;
 import exerd.utilizing.com.sqlwriter.ASqlWriter;
 import exerd.utilizing.com.sqlwriter.SqlWriterFactory;
@@ -28,7 +29,7 @@ public class ColumnComparer {
 
 	private DbConnection dbConnection;
 
-	private Map<Table, List<Column>> tableColumnMap;
+	private Map<Table, List<CompColumn>> tableColumnMap;
 
 	private int totalTableCount, currentTableCount;
 
@@ -41,23 +42,35 @@ public class ColumnComparer {
 		return null;
 	}
 
-	private List<Column> getCompareColumn(Table table, List<Column> ddlColumnList, List<Column> dbColumnList) {
+	private List<CompColumn> getCompareColumn(Table table, List<Column> ddlColumnList, List<Column> dbColumnList) {
 		String tableName = table.getTableName();
-		List<Column> resultCompColumnList = new ArrayList<Column>();
+		List<CompColumn> result = new ArrayList<CompColumn>();
 		if (dbColumnList.size() == 0) {
 			table.setNoneExistent(true);
 			// case 4: there is no table in db
 			System.out.println("[CASE4] There is no table in database\n");
-			return null;
+
+			for (Column ddlColumn : ddlColumnList) {
+				CompColumn compColumn = new CompColumn();
+				compColumn.setDdlColumn(ddlColumn);
+				compColumn.setCompTypeCd(IConstants.COMP_TYPE_CD.NONE_EXISTENT);
+				result.add(compColumn);
+			}
+			return result;
 		}
 
 		int differentColumnCount = 0;
 		for (Column ddlColumn : ddlColumnList) {
 			Column dbColumn = findColumn(dbColumnList, ddlColumn.getName());
+
+			CompColumn compColumn = new CompColumn();
+			compColumn.setDdlColumn(ddlColumn);
+			compColumn.setDbColumn(dbColumn);
+
 			if (dbColumn == null) {
 				// case 1: there is no column in db
 				// Common: ALTER TABLE 테이블명 ADD 컬럼명 데이터 유형 [NOT NULL];
-				ddlColumn.setCompTypeCd(IConstants.COMP_TYPE_CD.NONE_EXISTENT);
+				compColumn.setCompTypeCd(IConstants.COMP_TYPE_CD.NONE_EXISTENT);
 				sqlWriter.writeAddColumn(tableName, ddlColumn);
 				differentColumnCount++;
 				System.out.println("[CASE1] dbColumn: " + dbColumn + " ddlColumn: " + ddlColumn);
@@ -66,25 +79,30 @@ public class ColumnComparer {
 					// case 2: there is difference between ddl and db
 					// Oracle: ALTER TABLE 테이블명 MODIFY (컬럼명 데이터유형 [NOT NULL]);
 					// PostgreSQL: ALTER TABLE 테이블명 ALTER COLUMN 컬럼명 TYPE 데이터유형;
-					ddlColumn.setCompTypeCd(IConstants.COMP_TYPE_CD.DIFFERENT);
+					compColumn.setCompTypeCd(IConstants.COMP_TYPE_CD.DIFFERENT);
 					sqlWriter.writeAlterColumn(tableName, ddlColumn);
 					differentColumnCount++;
 					System.out.println("[CASE2] dbColumn: " + dbColumn + " ddlColumn: " + ddlColumn);
 				} else {
-					ddlColumn.setCompTypeCd(IConstants.COMP_TYPE_CD.EQUAL);
+					compColumn.setCompTypeCd(IConstants.COMP_TYPE_CD.EQUAL);
 				}
 			}
-			resultCompColumnList.add(ddlColumn);
+			result.add(compColumn);
 		}
 
 		for (Column dbColumn : dbColumnList) {
 			Column ddlColumn = findColumn(ddlColumnList, dbColumn.getName());
+
 			if (ddlColumn == null) {
+				CompColumn compColumn = new CompColumn();
+				compColumn.setDbColumn(dbColumn);
+				compColumn.setDdlColumn(ddlColumn);
+
 				// case 3: there is no column in ddl
-				dbColumn.setCompTypeCd(IConstants.COMP_TYPE_CD.UNNECESSARY);
+				compColumn.setCompTypeCd(IConstants.COMP_TYPE_CD.UNNECESSARY);
 				sqlWriter.writeDropColumn(tableName, dbColumn);
 				differentColumnCount++;
-				resultCompColumnList.add(dbColumn);
+				result.add(compColumn);
 				System.out.println("[CASE3] dbColumn: " + dbColumn + " ddlColumn: " + ddlColumn);
 			}
 		}
@@ -94,7 +112,7 @@ public class ColumnComparer {
 
 		table.setDifferentColumnCount(differentColumnCount);
 
-		return resultCompColumnList;
+		return result;
 	}
 
 	public int getCurrentProgressPercent() {
@@ -103,8 +121,8 @@ public class ColumnComparer {
 		return (currentTableCount * 100) / totalTableCount;
 	}
 
-	private Map<Table, List<Column>> makeTableColumnMap(String ddlText) {
-		tableColumnMap = new LinkedHashMap<Table, List<Column>>();
+	private Map<Table, List<CompColumn>> makeTableColumnMap(String ddlText) {
+		tableColumnMap = new LinkedHashMap<Table, List<CompColumn>>();
 
 		String[] ddlList = ddlText.split("CREATE TABLE ");
 
@@ -160,7 +178,7 @@ public class ColumnComparer {
 
 			List<Column> dbColumnList = tableReader.getTableColumnList(tableName);
 
-			List<Column> compColumnList = getCompareColumn(table, columnList, dbColumnList);
+			List<CompColumn> compColumnList = getCompareColumn(table, columnList, dbColumnList);
 
 			tableColumnMap.put(table, compColumnList);
 		}
@@ -168,7 +186,7 @@ public class ColumnComparer {
 		return tableColumnMap;
 	}
 
-	public Map<Table, List<Column>> process() {
+	public Map<Table, List<CompColumn>> process() {
 		sqlWriter = SqlWriterFactory.getSqlWriter(dbms);
 
 		DdlReader ddlReader = new DdlReader();
