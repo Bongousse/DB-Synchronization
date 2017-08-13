@@ -14,20 +14,34 @@ public class OracleSqlWriter extends ASqlWriter {
 
 	@Override
 	public String writeAddColumn(String tableName, Column column) {
-		// TODO Auto-generated method stub
-		return null;
+		String query = "ALTER TABLE " + tableName + " ADD " + column.getName() + " " + column.getType();
+		if (column.getSize() != 0) {
+			query += "(" + column.getSize() + ")";
+		}
+		if (column.getNullable() == 0) {
+			query += " NOT NULL";
+		}
+		query += ";";
+		return query;
 	}
 
 	@Override
 	public String writeAlterColumn(String tableName, Column column) {
-		// TODO Auto-generated method stub
-		return null;
+		String query = "ALTER TABLE " + tableName + " MODIFY " + column.getName() + " " + column.getType();
+		if (column.getSize() != 0) {
+			query += "(" + column.getSize() + ")";
+		}
+		if (column.getNullable() == 0) {
+			query += " NOT NULL";
+		}
+		query += ";";
+		return query;
 	}
 
 	@Override
 	public String writeDropColumn(String tableName, Column column) {
-		// TODO Auto-generated method stub
-		return null;
+		String query = "ALTER TABLE " + tableName + " DROP COLUMN " + column.getName() + ";";
+		return query;
 	}
 
 }

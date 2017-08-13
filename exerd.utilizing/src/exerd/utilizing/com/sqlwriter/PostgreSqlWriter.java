@@ -45,8 +45,7 @@ public class PostgreSqlWriter extends ASqlWriter {
 
 	@Override
 	public String writeDropColumn(String tableName, Column column) {
-		String query = "ALTER TABLE " + tableName + " DROP COLUMN " + column.getName();
-		query += ";";
+		String query = "ALTER TABLE " + tableName + " DROP COLUMN " + column.getName() + ";";
 
 		System.out.println(" - Query: " + query);
 		return query;
