@@ -1,9 +1,9 @@
 package exerd.utilizing.com.ui;
 
 import java.awt.Button;
-import java.awt.Choice;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.FileDialog;
 import java.awt.Font;
 import java.awt.Image;
 import java.awt.Label;
@@ -15,6 +15,7 @@ import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
@@ -29,7 +30,6 @@ import javax.swing.JList;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
-import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 
 import org.apache.log4j.xml.DOMConfigurator;
@@ -46,12 +46,8 @@ public class UiMain extends JFrame {
 	private static final long serialVersionUID = 1L;
 
 	TextField ddlPathTx = new TextField();
-	Choice dbmsCh = new Choice();
-	TextField ipTx = new TextField();
-	TextField portTx = new TextField();
-	TextField sidTx = new TextField();
-	TextField userIdTx = new TextField();
-	TextField passwordTx = new TextField();
+	JList dbList = new JList<>();
+	String dbInfo;
 	TextField ddlColumnTx = new TextField();
 	TextField dbColumnTx = new TextField();
 	JProgressBar pBar = new JProgressBar();
@@ -76,24 +72,18 @@ public class UiMain extends JFrame {
 		setLayout(null);
 
 		Label ddlPathLb = new Label("DDL Path:");
-		Label dbmsLb = new Label("DBMS:");
-		Label ipLb = new Label("IP:");
-		Label portLb = new Label("Port:");
-		Label sidLb = new Label("SID:");
-		Label userIdLb = new Label("User ID");
-		Label passwordLb = new Label("Password:");
+		Label dbListLb = new Label("DB List:");
 		Label tableListLb = new Label("Table List:");
 		Label columnListLb = new Label("Column List:");
 		Label ddlColumnLb = new Label("DDL Column:");
 		Label dbColumnLb = new Label("DB Column:");
 
-		dbmsCh.add("POSTGRESQL");
-		dbmsCh.add("ORACLE");
-
 		Button browseBtn = new Button("Browse...");
 		browseBtn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				// TODO
+				FileDialog fileBrowseDialog = new FileDialog(UiMain.this, "Select DDL File");
+				fileBrowseDialog.setVisible(true);
+				ddlPathTx.setText(fileBrowseDialog.getDirectory() + fileBrowseDialog.getFile());
 			}
 		});
 		Button compareBtn = new Button("Compare !");
@@ -101,7 +91,9 @@ public class UiMain extends JFrame {
 		Button generateBtn = new Button("Generate Query !");
 		generateBtn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				ASqlWriter sqlWriter = SqlWriterFactory.getSqlWriter(dbmsCh.getSelectedItem());
+				// ASqlWriter sqlWriter =
+				// SqlWriterFactory.getSqlWriter(dbmsCh.getSelectedItem());
+				ASqlWriter sqlWriter = SqlWriterFactory.getSqlWriter(null);
 				String query = sqlWriter.generateSql(compTableMap);
 				FileWriter fw = null;
 				try {
@@ -122,6 +114,40 @@ public class UiMain extends JFrame {
 			}
 		});
 
+		Button newBtn = new Button("New");
+		newBtn.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				new DbPopup();
+				getDbList();
+			}
+		});
+		Button detailBtn = new Button("Detail");
+		detailBtn.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String name = dbInfo.split("\t")[0];
+				String dbms = dbInfo.split("\t")[1];
+				String ip = dbInfo.split("\t")[2];
+				String port = dbInfo.split("\t")[3];
+				String sid = dbInfo.split("\t")[4];
+				String userId = dbInfo.split("\t")[5];
+				String password = dbInfo.split("\t")[6];
+
+				new DbPopup(name, dbms, ip, port, sid, userId, password);
+			}
+		});
+		Button deleteBtn = new Button("Delete");
+		deleteBtn.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				deleteDbInfo(dbInfo);
+				getDbList();
+			}
+		});
+
 		pBar.setStringPainted(true);
 		pBar.setMinimum(0);
 		pBar.setMaximum(100);
@@ -132,24 +158,16 @@ public class UiMain extends JFrame {
 
 		Font f = new Font("돋움", 10, 20);
 		ddlPathLb.setFont(f);
-		dbmsLb.setFont(f);
-		ipLb.setFont(f);
-		portLb.setFont(f);
-		sidLb.setFont(f);
-		userIdLb.setFont(f);
-		passwordLb.setFont(f);
+		dbListLb.setFont(f);
 		tableListLb.setFont(f);
 		columnListLb.setFont(f);
 		ddlColumnLb.setFont(f);
 		dbColumnLb.setFont(f);
 
 		ddlPathTx.setFont(f);
-		dbmsCh.setFont(f);
-		ipTx.setFont(f);
-		portTx.setFont(f);
-		sidTx.setFont(f);
-		userIdTx.setFont(f);
-		passwordTx.setFont(f);
+		newBtn.setFont(f);
+		detailBtn.setFont(f);
+		deleteBtn.setFont(f);
 		browseBtn.setFont(f);
 		compareBtn.setFont(f);
 		generateBtn.setFont(f);
@@ -167,12 +185,7 @@ public class UiMain extends JFrame {
 		int yInit = 70;
 		int yInterval = 60;
 		ddlPathLb.setBounds(xInit, yInit, 100, 20);
-		dbmsLb.setBounds(xInit, yInit + yInterval, 100, 20);
-		ipLb.setBounds(xInit, yInit + yInterval * 2, 100, 20);
-		portLb.setBounds(xInit + xInterval, yInit + yInterval * 2, 100, 20);
-		sidLb.setBounds(xInit + xInterval * 2, yInit + yInterval * 2, 50, 20);
-		userIdLb.setBounds(xInit, yInit + yInterval * 3, 100, 20);
-		passwordLb.setBounds(xInit + xInterval, yInit + yInterval * 3, 100, 20);
+		dbListLb.setBounds(xInit, yInit + yInterval - 20, 100, 20);
 		tableListLb.setBounds(xInit, yInit + yInterval * 5 + 50, 150, 20);
 		columnListLb.setBounds(xInit + xInterval + 70, yInit + yInterval * 5 + 50, 150, 20);
 		ddlColumnLb.setBounds(xInit, yInit + yInterval * 10, 130, 20);
@@ -182,12 +195,12 @@ public class UiMain extends JFrame {
 		yInit -= 4;
 		ddlPathTx.setBounds(xInit, yInit, 500, 30);
 		browseBtn.setBounds(xInit + xInterval * 2 - 80, yInit - 2, 130, 32);
-		dbmsCh.setBounds(xInit, yInit + yInterval, 165, 30);
-		ipTx.setBounds(xInit, yInit + yInterval * 2, 170, 30);
-		portTx.setBounds(xInit + xInterval, yInit + yInterval * 2, 100, 30);
-		sidTx.setBounds(xInit + xInterval * 2 - 50, yInit + yInterval * 2, 100, 30);
-		userIdTx.setBounds(xInit, yInit + yInterval * 3, 170, 30);
-		passwordTx.setBounds(xInit + xInterval, yInit + yInterval * 3, 150, 30);
+		JScrollPane dbListScroll = new JScrollPane(dbList);
+		dbListScroll.setBounds(xInit - 100, yInit + yInterval + 20, 600, 155);
+		newBtn.setBounds(xInit + xInterval * 2 - 80, yInit + yInterval + 18, 130, 32);
+		detailBtn.setBounds(xInit + xInterval * 2 - 80, yInit + yInterval + 78, 130, 32);
+		deleteBtn.setBounds(xInit + xInterval * 2 - 80, yInit + yInterval + 138, 130, 32);
+
 		compareBtn.setBounds(xInit + xInterval - 100, yInit + yInterval * 4, 130, 32);
 		pBar.setBounds(20, yInit + yInterval * 4 + 50, 750, 32);
 		JScrollPane tableListScroll = new JScrollPane(tableList);
@@ -198,18 +211,15 @@ public class UiMain extends JFrame {
 		dbColumnTx.setBounds(xInit + 30, yInit + yInterval * 11 - 30, 600, 30);
 		generateBtn.setBounds(xInit + xInterval - 160, yInit + yInterval * 10 + 100, 250, 32);
 
+		dbList.setCellRenderer(new DbListRenderer());
+
 		tableList.setCellRenderer(new TableListRenderer());
 
 		imageMap = createImageMap();
 		columnList.setCellRenderer(new ColumnListRenderer());
 
 		add(ddlPathLb);
-		add(dbmsLb);
-		add(ipLb);
-		add(portLb);
-		add(sidLb);
-		add(userIdLb);
-		add(passwordLb);
+		add(dbListLb);
 		add(tableListLb);
 		add(columnListLb);
 		add(tableListLb);
@@ -219,12 +229,10 @@ public class UiMain extends JFrame {
 
 		add(ddlPathTx);
 		add(browseBtn);
-		add(dbmsCh);
-		add(ipTx);
-		add(portTx);
-		add(sidTx);
-		add(userIdTx);
-		add(passwordTx);
+		getContentPane().add(dbListScroll);
+		add(newBtn);
+		add(detailBtn);
+		add(deleteBtn);
 		add(compareBtn);
 		add(pBar);
 		getContentPane().add(tableListScroll);
@@ -237,27 +245,66 @@ public class UiMain extends JFrame {
 		setResizable(false);
 		setVisible(true);
 
-		ddlPathTx.setText("C:\\Users\\Yong\\git\\eclipse.utilizing\\exerd.utilizing\\bxm_ddl.txt");
-		ipTx.setText("182.162.100.120");
-		portTx.setText("10110");
-		sidTx.setText("orcl");
-		userIdTx.setText("kbpoc");
-		passwordTx.setText("infrabxm0204");
+		ddlPathTx.setText("C:\\Users\\Yong\\git\\eclipse.utilizing\\exerd.utilizing\\ddl\\bxm_ddl.txt");
+
+		getDbList();
 	}
 
-	public void updateProgressBar(int value) {
-		pBar.setValue(value);
-	}
+	private void deleteDbInfo(String dbInfo) {
+		FileInputStream fis = null;
+		try {
+			fis = new FileInputStream("./config/dbList.txt");
+			int fileSize = fis.available();
+			byte buf[] = new byte[fileSize];
+			fis.read(buf);
+			String str = new String(buf);
+			str = str.replaceAll(dbInfo+"\n", "");
 
-	public void safeUpdateProgressBar(final int value) {
-		if (SwingUtilities.isEventDispatchThread()) {
-			updateProgressBar(value);
-		} else {
-			SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
-					updateProgressBar(value);
+			FileWriter fw = null;
+			try {
+				fw = new FileWriter("./config/dbList.txt", false);
+				fw.write(str);
+				fw.flush();
+			} catch (IOException ioe) {
+				ioe.printStackTrace();
+			} finally {
+				try {
+					fw.close();
+				} catch (IOException ioe) {
+					ioe.printStackTrace();
 				}
-			});
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				fis.close();
+			} catch (IOException ioe) {
+				ioe.printStackTrace();
+			}
+		}
+	}
+
+	private void getDbList() {
+		DefaultListModel listModel = new DefaultListModel<>();
+
+		FileInputStream fis;
+		try {
+			fis = new FileInputStream("./config/dbList.txt");
+			int fileSize = fis.available();
+			byte buf[] = new byte[fileSize];
+			fis.read(buf);
+			String str = new String(buf);
+			String[] dbStrList = str.split("\n");
+
+			for (String dbInfo : dbStrList) {
+				listModel.addElement(dbInfo);
+			}
+
+			dbList.setModel(listModel);
+
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -296,12 +343,13 @@ public class UiMain extends JFrame {
 			tableList.removeAll();
 
 			String ddlPath = ddlPathTx.getText();
-			String dbms = dbmsCh.getSelectedItem();
-			String ip = ipTx.getText();
-			String port = portTx.getText();
-			String sid = sidTx.getText();
-			String userId = userIdTx.getText();
-			String password = passwordTx.getText();
+
+			String dbms = dbInfo.split("\t")[1];
+			String ip = dbInfo.split("\t")[2];
+			String port = dbInfo.split("\t")[3];
+			String sid = dbInfo.split("\t")[4];
+			String userId = dbInfo.split("\t")[5];
+			String password = dbInfo.split("\t")[6];
 
 			final ColumnComparer c = new ColumnComparer(ddlPath, dbms, ip, port, sid, userId, password);
 
@@ -394,14 +442,29 @@ public class UiMain extends JFrame {
 		}
 	}
 
-	class GenerateSqlActionListener implements ActionListener {
-		@Override
-		public void actionPerformed(ActionEvent e) {
+	private class DbListRenderer extends DefaultListCellRenderer {
 
+		private static final long serialVersionUID = 5238435182832745600L;
+
+		@Override
+		public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
+				boolean cellHasFocus) {
+
+			setBackground(Color.WHITE);
+			if (isSelected) {
+				setBackground(Color.LIGHT_GRAY);
+			}
+			dbInfo = (String) value;
+
+			String name = dbInfo.split("\t")[0];
+
+			setText(name);
+			setFont(new Font("돋움", 10, 20));
+			return this;
 		}
 	}
 
-	public class TableListRenderer extends DefaultListCellRenderer {
+	private class TableListRenderer extends DefaultListCellRenderer {
 
 		private static final long serialVersionUID = 5138435182832745600L;
 
@@ -431,7 +494,7 @@ public class UiMain extends JFrame {
 		}
 	}
 
-	public class ColumnListRenderer extends DefaultListCellRenderer {
+	private class ColumnListRenderer extends DefaultListCellRenderer {
 
 		private static final long serialVersionUID = 5138435182732745600L;
 

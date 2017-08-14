@@ -6,7 +6,7 @@ plugins.addGetter("null-exp", function(it){
 	}
 });
 
-var file = newFile("/exerd.utilizing/bxm_ddl.txt");
+var file = newFile("/exerd.utilizing/ddl/bxm_ddl.txt");
 var outputStream = file.getOutputStream();
 
 var isPrimaryKeyOption = true;
