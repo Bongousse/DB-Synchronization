@@ -1,3 +1,6 @@
 test	ORACLE	12	4	34	5	555
 kbpoc_emerald	ORACLE	182.162.100.120	10110	orcl	kbpoc	infrabxm0204
 T#_emerald	POSTGRESQL	182.162.100.120	7349	bxt_db	bxt	bxt
+tttt	ORACLE					
+tttt	ORACLE					
+white	ORACLE	 	 	 	 	 

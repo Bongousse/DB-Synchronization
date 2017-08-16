@@ -22,7 +22,7 @@ import javax.swing.border.TitledBorder;
 
 import exerd.utilizing.com.constants.IConstants;
 
-class DbPopup extends JFrame {
+class DbPopup extends JDialog {
 
 	private static final long serialVersionUID = 1L;
 
@@ -140,8 +140,11 @@ class DbPopup extends JFrame {
 		labelFields.add(saveCancelPanel, BorderLayout.SOUTH);
 
 		add(labelFields);
+		setTitle("DB INFO");
 		setSize(400, 350);
-		setVisible(true);
+		setResizable(false);
+		pack();
+		setModal(true);
 	}
 
 	private void saveEvent(String name, String dbms, String ip, String port, String sid, String userId,

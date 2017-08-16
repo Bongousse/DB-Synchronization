@@ -119,8 +119,10 @@ public class UiMain extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				new DbPopup();
+				DbPopup dbPopup = new DbPopup();
+				dbPopup.setVisible(true);
 				getDbList();
+
 			}
 		});
 		Button detailBtn = new Button("Detail");
@@ -128,15 +130,17 @@ public class UiMain extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				String name = dbInfo.split("\t")[0];
-				String dbms = dbInfo.split("\t")[1];
-				String ip = dbInfo.split("\t")[2];
-				String port = dbInfo.split("\t")[3];
-				String sid = dbInfo.split("\t")[4];
-				String userId = dbInfo.split("\t")[5];
-				String password = dbInfo.split("\t")[6];
-
-				new DbPopup(name, dbms, ip, port, sid, userId, password);
+				String dbInfoTmp = dbInfo + " ";
+				String name = dbInfoTmp.split("\t")[0];
+				String dbms = dbInfoTmp.split("\t")[1];
+				String ip = dbInfoTmp.split("\t")[2];
+				String port = dbInfoTmp.split("\t")[3];
+				String sid = dbInfoTmp.split("\t")[4];
+				String userId = dbInfoTmp.split("\t")[5];
+				String password = dbInfoTmp.split("\t")[6];
+				
+				DbPopup dbPopup = new DbPopup(name, dbms, ip, port, sid, userId, password);
+				dbPopup.setVisible(true);
 			}
 		});
 		Button deleteBtn = new Button("Delete");
@@ -258,7 +262,7 @@ public class UiMain extends JFrame {
 			byte buf[] = new byte[fileSize];
 			fis.read(buf);
 			String str = new String(buf);
-			str = str.replaceAll(dbInfo+"\n", "");
+			str = str.replaceAll(dbInfo + "\n", "");
 
 			FileWriter fw = null;
 			try {
@@ -344,12 +348,13 @@ public class UiMain extends JFrame {
 
 			String ddlPath = ddlPathTx.getText();
 
-			String dbms = dbInfo.split("\t")[1];
-			String ip = dbInfo.split("\t")[2];
-			String port = dbInfo.split("\t")[3];
-			String sid = dbInfo.split("\t")[4];
-			String userId = dbInfo.split("\t")[5];
-			String password = dbInfo.split("\t")[6];
+			String dbInfoTmp = dbInfo + " ";
+			String dbms = dbInfoTmp.split("\t")[1];
+			String ip = dbInfoTmp.split("\t")[2];
+			String port = dbInfoTmp.split("\t")[3];
+			String sid = dbInfoTmp.split("\t")[4];
+			String userId = dbInfoTmp.split("\t")[5];
+			String password = dbInfoTmp.split("\t")[6];
 
 			final ColumnComparer c = new ColumnComparer(ddlPath, dbms, ip, port, sid, userId, password);
 
