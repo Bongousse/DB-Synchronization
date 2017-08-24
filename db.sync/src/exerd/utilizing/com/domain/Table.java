@@ -4,6 +4,7 @@ public class Table {
 	private String tableName;
 	private int differentColumnCount;
 	private boolean isNoneExistent;
+	private String ddl;
 
 	@Override
 	public String toString() {
@@ -14,6 +15,8 @@ public class Table {
 		builder.append(differentColumnCount);
 		builder.append(", isNoneExistent=");
 		builder.append(isNoneExistent);
+		builder.append(", ddl=");
+		builder.append(ddl);
 		builder.append("]");
 		return builder.toString();
 	}
@@ -40,6 +43,14 @@ public class Table {
 
 	public void setNoneExistent(boolean isNoneExistent) {
 		this.isNoneExistent = isNoneExistent;
+	}
+
+	public String getDdl() {
+		return ddl;
+	}
+
+	public void setDdl(String ddl) {
+		this.ddl = ddl;
 	}
 
 }

@@ -6,7 +6,7 @@ plugins.addGetter("null-exp", function(it){
 	}
 });
 
-var file = newFile("/exerd.utilizing/ddl/ddl.txt");
+var file = newFile("/db.sync/ddl/ddl.txt");
 var outputStream = file.getOutputStream();
 
 var isPrimaryKeyOption = true;

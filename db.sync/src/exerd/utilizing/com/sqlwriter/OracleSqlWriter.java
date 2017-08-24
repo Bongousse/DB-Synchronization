@@ -1,17 +1,14 @@
 package exerd.utilizing.com.sqlwriter;
 
-import java.util.List;
-
 import exerd.utilizing.com.constants.IConstants;
 import exerd.utilizing.com.domain.Column;
-import exerd.utilizing.com.domain.CompColumn;
+import exerd.utilizing.com.domain.Table;
 
 public class OracleSqlWriter extends ASqlWriter {
 
 	@Override
-	public String writeDdl(String tableName, List<CompColumn> columnList) {
-		// TODO Auto-generated method stub
-		return null;
+	public String writeDdl(Table table) {
+		return table.getDdl();
 	}
 
 	@Override

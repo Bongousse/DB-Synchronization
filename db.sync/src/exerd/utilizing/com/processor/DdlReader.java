@@ -13,7 +13,7 @@ public class DdlReader {
 		return ddl;
 	}
 
-	public static String readContentFrom(String textFileName) {
+	private String readContentFrom(String textFileName) {
 		BufferedReader bufferedTextFileReader = null;
 		StringBuilder contentReceiver = new StringBuilder();
 		try {

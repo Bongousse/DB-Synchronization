@@ -9,7 +9,7 @@ import exerd.utilizing.com.domain.CompColumn;
 import exerd.utilizing.com.domain.Table;
 
 public abstract class ASqlWriter {
-	public abstract String writeDdl(String tableName, List<CompColumn> columnList);
+	public abstract String writeDdl(Table table);
 
 	public abstract String writeAddColumn(String tableName, Column column);
 
@@ -31,7 +31,7 @@ public abstract class ASqlWriter {
 
 			if (table.isNoneExistent()) {
 				strBuffer.append("--" + tableName + "\n");
-				strBuffer.append(writeDdl(tableName, columnList));
+				strBuffer.append(writeDdl(table));
 				strBuffer.append("\n");
 			} else {
 				boolean firstFlag = true;

@@ -171,6 +171,7 @@ public class ColumnComparer {
 
 			Table table = new Table();
 			table.setTableName(tableName);
+			table.setDdl("CREATE TABLE " + ddl);
 
 			List<Column> dbColumnList = tableReader.getTableColumnList(tableName);
 
