@@ -65,7 +65,7 @@ public class UiMain extends JFrame {
 
 		addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent windowEvent) {
-				System.exit(0); 
+				System.exit(0);
 			}
 		});
 
@@ -248,7 +248,7 @@ public class UiMain extends JFrame {
 		setResizable(false);
 		setVisible(true);
 
-		ddlPathTx.setText("C:\\Users\\Yong\\git\\eclipse.utilizing\\exerd.utilizing\\ddl\\bxm_ddl.txt");
+		ddlPathTx.setText("C:\\Users\\Yong\\git\\DB-Synchronization\\db.sync\\ddl\\bxm_ddl.txt");
 
 		getDbList();
 	}

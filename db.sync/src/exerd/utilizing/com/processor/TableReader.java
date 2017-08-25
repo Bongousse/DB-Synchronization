@@ -42,6 +42,14 @@ public class TableReader {
 				column.setName(name);
 				column.setType(type);
 				column.setSize(Integer.valueOf(size));
+				if (type.contains("TIMESTAMP")) {
+					column.setType("TIMESTAMP");
+					if (type.contains("(") && type.contains(")")) {
+						column.setSize(Integer.valueOf(type.substring(type.indexOf("(") + 1, type.indexOf(")"))));
+					}
+				} else if(type.equals("DATE")){
+					column.setSize(0);
+				}
 				column.setNullable(Integer.valueOf(nullable));
 				column.setComment(remarks);
 

@@ -34,6 +34,7 @@ public class PostgreSqlWriter extends ASqlWriter {
 
 	@Override
 	public String writeAlterColumn(String tableName, Column column) {
+		//TODO varchar -> integer, varchar -> bytea 등 타입 변환이 있을 때 처리 필요 (hint: using col_name::type)
 		// ALTER TABLE 테이블명 ALTER COLUMN 컬럼명 TYPE 데이터유형;
 		String query = "ALTER TABLE " + tableName + " ALTER COLUMN " + column.getName() + " TYPE " + column.getType();
 		if (column.getSize() != 0) {

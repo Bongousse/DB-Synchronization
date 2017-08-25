@@ -5,10 +5,9 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
+import java.util.TreeMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +29,7 @@ public class ColumnComparer {
 
 	private DbConnection dbConnection;
 
-	private Map<Table, List<CompColumn>> tableColumnMap;
+	private TreeMap<Table, List<CompColumn>> tableColumnMap;
 
 	private int totalTableCount, currentTableCount;
 
@@ -117,8 +116,8 @@ public class ColumnComparer {
 		return (currentTableCount * 100) / totalTableCount;
 	}
 
-	private Map<Table, List<CompColumn>> makeTableColumnMap(String ddlText) {
-		tableColumnMap = new LinkedHashMap<Table, List<CompColumn>>();
+	private TreeMap<Table, List<CompColumn>> makeTableColumnMap(String ddlText) {
+		tableColumnMap = new TreeMap<Table, List<CompColumn>>();
 
 		String[] ddlList = ddlText.split("CREATE TABLE ");
 
@@ -183,7 +182,7 @@ public class ColumnComparer {
 		return tableColumnMap;
 	}
 
-	public Map<Table, List<CompColumn>> process() throws Exception {
+	public TreeMap<Table, List<CompColumn>> process() throws Exception {
 		DdlReader ddlReader = new DdlReader();
 
 		String ddlText = ddlReader.readDdl(ddlFilePath);

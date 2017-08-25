@@ -1,6 +1,6 @@
 package exerd.utilizing.com.domain;
 
-public class Table {
+public class Table implements Comparable<Table> {
 	private String tableName;
 	private int differentColumnCount;
 	private boolean isNoneExistent;
@@ -51,6 +51,17 @@ public class Table {
 
 	public void setDdl(String ddl) {
 		this.ddl = ddl;
+	}
+
+	@Override
+	public int compareTo(Table o) {
+		if (this.differentColumnCount > o.differentColumnCount) {
+			return -1;
+		} else if (this.differentColumnCount < o.differentColumnCount) {
+			return 1;
+		} else {
+			return this.tableName.compareTo(o.tableName);
+		}
 	}
 
 }
