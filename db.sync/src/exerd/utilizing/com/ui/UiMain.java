@@ -185,7 +185,7 @@ public class UiMain extends JFrame {
 
 		int xInit = 30;
 		int xInterval = 300;
-		int yInit = 70;
+		int yInit = 30;
 		int yInterval = 60;
 		ddlPathLb.setBounds(xInit, yInit, 100, 20);
 		dbListLb.setBounds(xInit, yInit + yInterval - 20, 100, 20);
@@ -244,11 +244,11 @@ public class UiMain extends JFrame {
 		add(dbColumnTx);
 		add(generateBtn);
 
-		setSize(800, 850);
+		setSize(800, 830);
 		setResizable(false);
 		setVisible(true);
 
-		ddlPathTx.setText("C:\\Users\\Yong\\git\\DB-Synchronization\\db.sync\\ddl\\bxm_ddl.txt");
+		ddlPathTx.setText("C:\\Users\\Yong\\git\\DB-Synchronization\\db.sync\\ddl\\ddl.txt");
 
 		getDbList();
 	}
