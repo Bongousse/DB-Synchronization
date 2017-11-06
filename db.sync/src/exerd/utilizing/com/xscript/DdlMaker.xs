@@ -1,35 +1,40 @@
 // Setting
 var outputDdlFile = newFile("/db.sync/ddl/ddl.txt"); // 출력 DDL 파일 경로
 var sourceDbmsType = 0; // 원본 파일 DBMS 타입 0: ORACLE, 1: POSTGRESQL, 2: MYSQL
-var outputDbmsType = 1; // 출력 파일 DBMS 타입 0: ORACLE, 1: POSTGRESQL, 2: MYSQL
+var outputDbmsType = 2; // 출력 파일 DBMS 타입 0: ORACLE, 1: POSTGRESQL, 2: MYSQL
 var generatePrimaryKey = true; // PK 생성 옵션
 var generateComment = true; // 코멘트 생성 옵션
 
 // DBMS 도메인 타입
-var stringArray = newList();
+var stringArray = newList(); // 문자열
 stringArray.add("VARCHAR2"); // ORACLE
 stringArray.add("VARCHAR"); // POSTGRESQL
 stringArray.add("VARCHAR"); // MYSQL
 
-var numberArray = newList();
+var numberArray = newList(); // 8 바이트 이하 정수
 numberArray.add("NUMBER"); // ORACLE
 numberArray.add("NUMERIC"); // POSTGRESQL
 numberArray.add("INT"); // MYSQL
 
-var decimalArray = newList();
-decimalArray.add("NUMBER"); // ORACLE
-dceimalArray.add("NUMERIC"); // POSTGRESQL
-dceimalArray.add("FLOAT"); // MYSQL
+var bigNumberArray = newList(); // 9 바이트 이상 정수
+bigNumberArray.add("NUMBER"); // ORACLE
+bigNumberArray.add("NUMERIC"); // POSTGRESQL
+bigNumberArray.add("BIGINT"); // MYSQL
 
-var binaryArray = newList();
+var decimalArray = newList(); // 소수
+decimalArray.add("NUMBER"); // ORACLE
+decimalArray.add("NUMERIC"); // POSTGRESQL
+decimalArray.add("FLOAT"); // MYSQL
+
+var binaryArray = newList(); // 이진 데이터
 binaryArray.add("BLOB"); // ORACLE
 binaryArray.add("BYTEA"); // POSTGRESQL
-binaryArray.add("BLOB"); // MYSQL
+binaryArray.add("LONGBLOB"); // MYSQL 
 
-var charBinaryArray = newList();
+var charBinaryArray = newList(); // 캐릭터 이진 데이터
 charBinaryArray.add("CLOB"); // ORACLE
 charBinaryArray.add("BYTEA"); // POSTGRESQL
-charBinaryArray.add("BINARY"); // MYSQL
+charBinaryArray.add("TEXT"); // MYSQL
 
 var outputStream = outputDdlFile.getOutputStream();
 
@@ -61,12 +66,8 @@ select(function(it){
 		var physicalName = column.get("physical-name");
 		var dataType = column.get("data-type");
 		
-		var dataTypeWithoutSize;
-		if (dataType.contains('(')){
-			dataTypeWithoutSize = dataType.substring(0, dataType.indexOf('('));
-		} else {
-			dataTypeWithoutSize = dataType;
-		}
+		var lengthRegex = "((\\([^)]*\\))?)";
+		var dataTypeWithoutSize = dataType.replaceAll(lengthRegex, "");
 		
 		var suffix = "\\s*((\\([^)]*\\))?)";
 		var ori = dataType;
@@ -76,9 +77,24 @@ select(function(it){
 			if (stringArray.contains(dataTypeWithoutSize)){
 				dataType = stringArray.get(outputDbmsType) + matcher.group(1);
 			} else if (numberArray.contains(dataTypeWithoutSize)){
-				dataType = numberArray.get(outputDbmsType) + matcher.group(1);
+				if (dataType.contains(',')){
+					dataType = decimalArray.get(outputDbmsType) + matcher.group(1);
+				} else {
+					var size = matcher.group(1).substring(matcher.group(1).indexOf('('), matcher.group(1).indexOf(')'));
+					if (size <= 8){
+						dataType = numberArray.get(outputDbmsType) + matcher.group(1);
+					} else {
+						dataType = bigNumberArray.get(outputDbmsType) + matcher.group(1);
+					}
+				}
+			} else if (bigNumberArray.contains(dataTypeWithoutSize)){
+				dataType = bigNumberArray.get(outputDbmsType) + matcher.group(1);
+			} else if (decimalArray.contains(dataTypeWithoutSize)){
+				dataType = decimalArray.get(outputDbmsType) + matcher.group(1);
 			} else if (binaryArray.contains(dataTypeWithoutSize)){
 				dataType = binaryArray.get(outputDbmsType) + matcher.group(1);
+			} else if (charBinaryArray.contains(dataTypeWithoutSize)){
+				dataType = charBinaryArray.get(outputDbmsType) + matcher.group(1);
 			}
 		}
 		
