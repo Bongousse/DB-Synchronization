@@ -38,6 +38,14 @@ charBinaryArray.add("TEXT"); // MYSQL
 
 var outputStream = outputDdlFile.getOutputStream();
 
+plugins.addGetter("null-exp", function(it){
+	if (it.get("not-null") == true){
+		return "NOT NULL";
+	} else {
+		return "NULL";
+	}
+});
+
 select(function(it){
 	return it.get("type") == "table";
 }).each(function(table){
@@ -54,6 +62,7 @@ select(function(it){
 	
 	var index = 0;
 	var primaryKeyCount = 0;
+	var primaryKeyList = newList();
 	
 	// 컬럼 출력
 	table.select(function(it){
@@ -102,6 +111,7 @@ select(function(it){
 		var isPrimaryKey = column.get("is-primary-key");
 		if (isPrimaryKey == true){
 			primaryKeyCount++;
+			primaryKeyList.add(physicalName);
 		}
 		
 		// MYSQL의 경우 컬럼 출력 시 comment 출력
@@ -114,8 +124,27 @@ select(function(it){
 		}
 		
 		if (index === numberOfColumns){
-			console.log(format("%s %s %s %s %s", indent, physicalName, dataType, nullable, extra));
-			outputStream.println(format("%s %s %s %s %s", indent, physicalName, dataType, nullable, extra));
+			//MYSQL의 경우 CREATE TABLE 안에서 PK 생성
+			if (outputDbmsType == 2 && generatePrimaryKey){
+				console.log(format("%s %s %s %s %s,", indent, physicalName, dataType, nullable, extra));
+				outputStream.println(format("%s %s %s %s %s,", indent, physicalName, dataType, nullable, extra));
+				
+				console.logf(format("%s PRIMARY KEY(", indent));
+				outputStream.printf(format("%s PRIMARY KEY(", indent));
+				
+				for (var i = 0; i < primaryKeyList.size(); i++){
+					if (i == primaryKeyList.size() - 1){
+						console.log(format("%s) ", primaryKeyList.get(i)));
+						outputStream.println(format("%s) ", primaryKeyList.get(i)));
+					} else {
+						console.logf(format("%s, ", primaryKeyList.get(i)));
+						outputStream.printf(format("%s, ", primaryKeyList.get(i)));
+					}
+				}
+			} else {
+				console.log(format("%s %s %s %s %s", indent, physicalName, dataType, nullable, extra));
+				outputStream.println(format("%s %s %s %s %s", indent, physicalName, dataType, nullable, extra));
+			}
 		} else {
 			console.log(format("%s %s %s %s %s,", indent, physicalName, dataType, nullable, extra));
 			outputStream.println(format("%s %s %s %s %s,", indent, physicalName, dataType, nullable, extra));
@@ -136,7 +165,7 @@ select(function(it){
 	if (generatePrimaryKey == true){
 		
 		// ORACLE or MYSQL
-		if (outputDbmsType == 0 || outputDbmsType == 2){
+		if (outputDbmsType == 0){
 			console.log(format("ALTER TABLE %s ADD CONSTRAINT PK_%s PRIMARY KEY \n( ", tableName, tableName));
 			outputStream.println(format("ALTER TABLE %s ADD CONSTRAINT PK_%s PRIMARY KEY \n( ", tableName, tableName));
 			
