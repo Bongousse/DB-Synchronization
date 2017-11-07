@@ -137,7 +137,7 @@ select(function(it){
 			extra = "";
 		}
 		
-		if (index === numberOfColumns){
+		if (index === numberOfColumns && primaryKeyList.size() != 0){
 			//MYSQL의 경우 CREATE TABLE 안에서 PK 생성
 			if (outputDbmsType == 2 && generatePrimaryKey){
 				console.log(format("%s %s %s %s %s,", indent, physicalName, dataType, nullable, extra));
@@ -178,7 +178,7 @@ select(function(it){
 	// PK 생성
 	if (generatePrimaryKey == true){
 		
-		// ORACLE or MYSQL
+		// ORACLE
 		if (outputDbmsType == 0){
 			console.log(format("ALTER TABLE %s ADD CONSTRAINT PK_%s PRIMARY KEY \n( ", tableName, tableName));
 			outputStream.println(format("ALTER TABLE %s ADD CONSTRAINT PK_%s PRIMARY KEY \n( ", tableName, tableName));
