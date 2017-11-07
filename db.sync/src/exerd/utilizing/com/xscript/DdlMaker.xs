@@ -91,7 +91,7 @@ select(function(it){
 				} else {
 					// 데이터 타입에 사이즈가 있을 때 처리
 					if (dataType.contains('(')){
-						var size = matcher.group(1).substring(matcher.group(1).indexOf('('), matcher.group(1).indexOf(')'));
+						var size = matcher.group(1).substring(matcher.group(1).indexOf('(') + 1, matcher.group(1).indexOf(')'));
 						if (size <= 8){
 							dataType = numberArray.get(outputDbmsType);
 						} else {
