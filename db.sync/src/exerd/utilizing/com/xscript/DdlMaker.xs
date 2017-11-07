@@ -176,7 +176,7 @@ select(function(it){
 	}
 	
 	// PK 생성
-	if (generatePrimaryKey == true){
+	if (generatePrimaryKey == true && primaryKeyList.size() != 0){
 		
 		// ORACLE
 		if (outputDbmsType == 0){
