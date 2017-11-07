@@ -132,7 +132,9 @@ select(function(it){
 		var extra;
 		if (generateComment == true && outputDbmsType == 2){
 			var comment = column.get("logical-name");
-			extra = "COMMENT '" + comment + "'";
+			if (comment != null){
+				extra = "COMMENT '" + comment + "'";
+			}
 		} else {
 			extra = "";
 		}
@@ -168,8 +170,10 @@ select(function(it){
 	// MYSQL의 경우 테이블 출력 시 테이블 comment 출력
 	if (generateComment == true && outputDbmsType == 2){
 		var comment = table.get("logical-name");
-		console.log(format(") COMMENT '%s';\n", comment));
-		outputStream.println(format(") COMMENT '%s';\n", comment));
+		if (comment != null){
+			console.log(format(") COMMENT '%s';\n", comment));
+			outputStream.println(format(") COMMENT '%s';\n", comment));
+		}
 	} else {
 		console.log(format(");\n"));
 		outputStream.println(format(");\n"));
@@ -248,16 +252,20 @@ select(function(it){
 	// 코멘트 생성
 	if (generateComment == true && (outputDbmsType == 0 || outputDbmsType == 1)){
 		var comment = table.get("logical-name");
-		console.log(format("COMMENT ON TABLE %s IS '%s';", tableName, comment));
-		outputStream.println(format("COMMENT ON TABLE %s IS '%s';", tableName, comment));
+		if (comment != null){
+			console.log(format("COMMENT ON TABLE %s IS '%s';", tableName, comment));
+			outputStream.println(format("COMMENT ON TABLE %s IS '%s';", tableName, comment));
+		}
 		
 		table.select(function(it){
 			return it.get("type") == "column";
 		}).each(function(column){
 			var physicalName = column.get("physical-name");
 			var comment = column.get("logical-name");
-			console.log(format("COMMENT ON COLUMN %s.%s IS '%s';", tableName, physicalName, comment));
-			outputStream.println(format("COMMENT ON COLUMN %s.%s IS '%s';", tableName, physicalName, comment));
+			if (comment != null){
+				console.log(format("COMMENT ON COLUMN %s.%s IS '%s';", tableName, physicalName, comment));
+				outputStream.println(format("COMMENT ON COLUMN %s.%s IS '%s';", tableName, physicalName, comment));
+			}
 		});
 	}
 	console.log();
