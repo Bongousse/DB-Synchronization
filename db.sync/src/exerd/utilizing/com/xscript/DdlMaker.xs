@@ -1,5 +1,5 @@
 // Setting
-var outputDdlFile = newFile("/db.sync/ddl/ddl.txt"); // 출력 DDL 파일 경로
+var outputDdlFile = newFile("DB-Synchronization/db.sync/ddl/ddl.txt"); // 출력 DDL 파일 경로
 var sourceDbmsType = 0; // 원본 파일 DBMS 타입 0: ORACLE, 1: POSTGRESQL, 2: MYSQL
 var outputDbmsType = 2; // 출력 파일 DBMS 타입 0: ORACLE, 1: POSTGRESQL, 2: MYSQL
 var generatePrimaryKey = true; // PK 생성 옵션
@@ -128,15 +128,22 @@ select(function(it){
 			primaryKeyList.add(physicalName);
 		}
 		
-		// MYSQL의 경우 컬럼 출력 시 comment 출력
 		var extra;
+		var defaultValue = column.get("default-value");
+		if (defaultValue != null){
+			extra = "DEFAULT '" + defaultValue + "' ";
+		} else {
+			extra = "";
+		}
+		
+		// MYSQL의 경우 컬럼 출력 시 comment 출력
 		if (generateComment == true && outputDbmsType == 2){
 			var comment = column.get("logical-name");
 			if (comment != null){
-				extra = "COMMENT '" + comment + "'";
+				extra += "COMMENT '" + comment + "'";
 			}
 		} else {
-			extra = "";
+			extra = extra;
 		}
 		
 		if (index === numberOfColumns && primaryKeyList.size() != 0){
