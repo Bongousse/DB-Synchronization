@@ -155,9 +155,9 @@ select(function(it){
 			extra = extra;
 		}
 		
-		if (index === numberOfColumns && primaryKeyList.size() != 0){
+		if (index === numberOfColumns){
 			//MYSQL의 경우 CREATE TABLE 안에서 PK 생성
-			if (outputDbmsType == 2 && generatePrimaryKey){
+			if (outputDbmsType == 2 && generatePrimaryKey && primaryKeyList.size() != 0){
 				console.log(format("%s %s %s %s %s,", indent, physicalName, dataType, nullable, extra));
 				outputStream.println(format("%s %s %s %s %s,", indent, physicalName, dataType, nullable, extra));
 				
