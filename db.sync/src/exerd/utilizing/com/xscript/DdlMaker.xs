@@ -89,15 +89,29 @@ select(function(it){
 				if (dataType.contains(',')){
 					dataType = decimalArray.get(outputDbmsType) + matcher.group(1);
 				} else {
-					var size = matcher.group(1).substring(matcher.group(1).indexOf('('), matcher.group(1).indexOf(')'));
-					if (size <= 8){
-						dataType = numberArray.get(outputDbmsType) + matcher.group(1);
+					// 데이터 타입에 사이즈가 있을 때 처리
+					if (dataType.contains('(')){
+						var size = matcher.group(1).substring(matcher.group(1).indexOf('('), matcher.group(1).indexOf(')'));
+						if (size <= 8){
+							dataType = numberArray.get(outputDbmsType);
+						} else {
+							dataType = bigNumberArray.get(outputDbmsType);
+						}
+						
+						// MYSQL은 정수 타입에 사이즈를 붙이지 않음
+						if (outputDbmsType != 2){
+							dataType += matcher.group(1)
+						}
 					} else {
-						dataType = bigNumberArray.get(outputDbmsType) + matcher.group(1);
+						dataType = bigNumberArray.get(outputDbmsType);
 					}
 				}
 			} else if (bigNumberArray.contains(dataTypeWithoutSize)){
-				dataType = bigNumberArray.get(outputDbmsType) + matcher.group(1);
+				dataType = bigNumberArray.get(outputDbmsType);
+				// MYSQL은 정수 타입에 사이즈를 붙이지 않음
+				if (outputDbmsType != 2){
+					dataType += matcher.group(1)
+				}
 			} else if (decimalArray.contains(dataTypeWithoutSize)){
 				dataType = decimalArray.get(outputDbmsType) + matcher.group(1);
 			} else if (binaryArray.contains(dataTypeWithoutSize)){
