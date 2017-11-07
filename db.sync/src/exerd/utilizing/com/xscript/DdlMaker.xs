@@ -4,6 +4,7 @@ var sourceDbmsType = 0; // 원본 파일 DBMS 타입 0: ORACLE, 1: POSTGRESQL, 2
 var outputDbmsType = 2; // 출력 파일 DBMS 타입 0: ORACLE, 1: POSTGRESQL, 2: MYSQL
 var generatePrimaryKey = true; // PK 생성 옵션
 var generateComment = true; // 코멘트 생성 옵션
+var generateDiagram = true; // 다이어그램 출력 옵션
 
 // DBMS 도메인 타입
 var stringArray = newList(); // 문자열
@@ -49,6 +50,14 @@ plugins.addGetter("null-exp", function(it){
 select(function(it){
 	return it.get("type") == "table";
 }).each(function(table){
+	
+	if (generateDiagram){
+		var tableDiagram = table.get("table-diagram");
+		tableDiagram.each(function(it){
+			console.log(format("--%s", it.get("diagram")));
+			outputStream.println(format("--%s", it.get("diagram")));
+		});
+	}
 	
 	var tableName = table.get("physical-name");
 	
