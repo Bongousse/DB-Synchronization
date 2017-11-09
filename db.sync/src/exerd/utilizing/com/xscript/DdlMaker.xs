@@ -142,6 +142,8 @@ select(function(it){
 					dataType = binaryArray.get(outputDbmsType);
 				} else if (charBinaryArray.contains(dataTypeWithoutSize)){
 					dataType = charBinaryArray.get(outputDbmsType);
+				} else {
+					dataType = dataTypeWithoutSize;
 				}
 				
 				// 사이즈가 0이면 붙이지 않음
