@@ -1,5 +1,5 @@
 // Setting
-var outputDdlFile = newFile("/db.sync/ddl/ddl.txt"); // 출력 DDL 파일 경로
+var outputDdlFile = newFile("/DB-Synchronization/db.sync/ddl/ddl.txt"); // 출력 DDL 파일 경로
 var sourceDbmsType = 0; // 원본 파일 DBMS 타입 0: ORACLE, 1: POSTGRESQL, 2: MYSQL
 var outputDbmsType = 2; // 출력 파일 DBMS 타입 0: ORACLE, 1: POSTGRESQL, 2: MYSQL
 var generatePrimaryKey = true; // PK 생성 옵션
@@ -87,63 +87,67 @@ select(function(it){
 		
 		var physicalName = column.get("physical-name");
 		
-		var domainName = column.get("domain").get("name");
+		var domainName = null;
+		if (column.get("domain") != null){
+			domainName = column.get("domain").get("name");
+		}
 		
 		var dataType = column.get("data-type");
-		
-		var lengthRegex = "((\\([^)]*\\))?)";
-		var dataTypeWithoutSize = dataType.replaceAll(lengthRegex, "");
-		
-		var suffix = "\\s*((\\([^)]*\\))?)";
-		var ori = dataType;
-		var p = compilePattern("^" + dataTypeWithoutSize + suffix + "$");
-		var matcher = p.matcher(dataType);
-		if (matcher.matches()){
-			var size = 0;
-			if (dataType.contains('(')){
-				size = matcher.group(1).substring(matcher.group(1).indexOf('(') + 1, matcher.group(1).indexOf(')'));
-				
-				if (bxmCustomizing){
-					if (domainName.contains(resizeDomainType)){
-						size = Math.floor(size / 3);
+		if (dataType != null){
+			var lengthRegex = "((\\([^)]*\\))?)";
+			var dataTypeWithoutSize = dataType.replaceAll(lengthRegex, "");
+			
+			var suffix = "\\s*((\\([^)]*\\))?)";
+			var ori = dataType;
+			var p = compilePattern("^" + dataTypeWithoutSize + suffix + "$");
+			var matcher = p.matcher(dataType);
+			if (matcher.matches()){
+				var size = 0;
+				if (dataType.contains('(')){
+					size = matcher.group(1).substring(matcher.group(1).indexOf('(') + 1, matcher.group(1).indexOf(')'));
+					
+					if (bxmCustomizing){
+						if (domainName != null && domainName.contains(resizeDomainType)){
+							size = Math.floor(size / 3);
+						}
 					}
 				}
-			}
-			
-			if (stringArray.contains(dataTypeWithoutSize)){
-				dataType = stringArray.get(outputDbmsType);
-			} else if (numberArray.contains(dataTypeWithoutSize)){
-				if (dataType.contains(',')){
-					dataType = decimalArray.get(outputDbmsType);
-				} else {
-					if (size <= 8){
-						dataType = numberArray.get(outputDbmsType);
+				
+				if (stringArray.contains(dataTypeWithoutSize)){
+					dataType = stringArray.get(outputDbmsType);
+				} else if (numberArray.contains(dataTypeWithoutSize)){
+					if (dataType.contains(',')){
+						dataType = decimalArray.get(outputDbmsType);
 					} else {
-						dataType = bigNumberArray.get(outputDbmsType);
+						if (size <= 8){
+							dataType = numberArray.get(outputDbmsType);
+						} else {
+							dataType = bigNumberArray.get(outputDbmsType);
+						}
+						
+						// MYSQL은 정수 타입에 사이즈를 붙이지 않음
+						if (outputDbmsType == 2){
+							size = 0;
+						}
 					}
-					
+				} else if (bigNumberArray.contains(dataTypeWithoutSize)){
+					dataType = bigNumberArray.get(outputDbmsType);
 					// MYSQL은 정수 타입에 사이즈를 붙이지 않음
 					if (outputDbmsType == 2){
 						size = 0;
 					}
+				} else if (decimalArray.contains(dataTypeWithoutSize)){
+					dataType = decimalArray.get(outputDbmsType);
+				} else if (binaryArray.contains(dataTypeWithoutSize)){
+					dataType = binaryArray.get(outputDbmsType);
+				} else if (charBinaryArray.contains(dataTypeWithoutSize)){
+					dataType = charBinaryArray.get(outputDbmsType);
 				}
-			} else if (bigNumberArray.contains(dataTypeWithoutSize)){
-				dataType = bigNumberArray.get(outputDbmsType);
-				// MYSQL은 정수 타입에 사이즈를 붙이지 않음
-				if (outputDbmsType == 2){
-					size = 0;
+				
+				// 사이즈가 0이면 붙이지 않음
+				if (size != 0){
+					dataType += "(" + size + ")";
 				}
-			} else if (decimalArray.contains(dataTypeWithoutSize)){
-				dataType = decimalArray.get(outputDbmsType);
-			} else if (binaryArray.contains(dataTypeWithoutSize)){
-				dataType = binaryArray.get(outputDbmsType);
-			} else if (charBinaryArray.contains(dataTypeWithoutSize)){
-				dataType = charBinaryArray.get(outputDbmsType);
-			}
-			
-			// 사이즈가 0이면 붙이지 않음
-			if (size != 0){
-				dataType += "(" + size + ")";
 			}
 		}
 		
