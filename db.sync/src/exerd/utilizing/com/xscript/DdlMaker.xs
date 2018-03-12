@@ -1,10 +1,10 @@
 // Setting
-var outputDdlFile = newFile("/DB-Synchronization/db.sync/ddl/ddl.txt"); // 출력 DDL 파일 경로
-var sourceDbmsType = 0; // 원본 파일 DBMS 타입 0: ORACLE, 1: POSTGRESQL, 2: MYSQL
-var outputDbmsType = 2; // 출력 파일 DBMS 타입 0: ORACLE, 1: POSTGRESQL, 2: MYSQL
+var outputDdlFile = newFile("/db.sync/ddl/ddl.txt"); // 출력 DDL 파일 경로
+var sourceDbmsType = 1; // 원본 파일 DBMS 타입 0: ORACLE, 1: POSTGRESQL, 2: MYSQL
+var outputDbmsType = 0; // 출력 파일 DBMS 타입 0: ORACLE, 1: POSTGRESQL, 2: MYSQL
 var generatePrimaryKey = true; // PK 생성 옵션
 var generateComment = true; // 코멘트 생성 옵션
-var generateDiagram = true; // 다이어그램 출력 옵션
+var generateDiagram = false; // 다이어그램 출력 옵션
 
 // DBMS 도메인 타입
 var stringArray = newList(); // 문자열
@@ -309,6 +309,21 @@ select(function(it){
 	}
 	console.log();
 	outputStream.println();
+	
+	table.select(function(it){
+		return it.get("type") == "non-unique-index"
+	}).each(function(index){
+		var physicalName = index.get("physical-name");
+		console.log(format("%s", physicalName));
+		var table = index.get("table");
+		table.select(function(it){
+			return it.get("type") == "column";
+		}).each(function(column){
+			if (column.get("is-non-unique-indexed") == true){
+				console.log("\tIndex Column: " + column.get("physical-name"));
+			}
+		});
+	});
 });
 
 outputStream.close();
