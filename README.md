@@ -2,7 +2,7 @@
 This project includes makeDDL from eXERD and DB Synchronization between DDL and DB
 
 In order to use this project, there are two steps.
-## 1. Make a DDL for eXERD
+## 1. Make a DDL from eXERD
 	1) You can see {home_direcoty}/exerd.utilizing.com/script/DdlMaker.xs and open it.
 	2) Execute this script file (You have to execute xscript file. That is not run button in eclipse, but run XScript button)
 	3) You should choose a eXERD file for making a DDL. (eXERD project must be included in your project explorer) 
